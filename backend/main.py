@@ -15,9 +15,18 @@ fps = data.get(cv2.CAP_PROP_FPS)
 seconds = round(frames / fps) 
 video_time = datetime.timedelta(seconds=seconds) 
 
-start = random.randint(10, seconds-300)
+start = random.randint(10, seconds - 300)
 end = start + 30
-clip1 = VideoFileClip("minecraftvideo.mp4").subclip(start, end)
+clippedVideo = VideoFileClip(video_path).subclip(start, end)
 
-output_path = os.path.join(script_dir, 'clippedvideo.mp4')
-clip1.write_videofile(output_path, codec="libx264")
+original_width, original_height = clippedVideo.size
+new_width = (original_height/1920) * 1080
+new_height = original_height
+x1 = (original_width - new_width) // 2
+x2 = x1 + new_width
+y1 = 0
+y2 = original_height
+
+backgroundVideo = clippedVideo.crop(x1=x1, x2=x2, y1=y1, y2=y2)
+output_path = os.path.join(script_dir, 'clipped_video.mp4')
+backgroundVideo.write_videofile(output_path, codec="libx264")
