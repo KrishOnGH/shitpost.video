@@ -1,7 +1,9 @@
 from moviepy.editor import VideoFileClip, AudioFileClip
+import ffmpeg
 import pyttsx3
 import wave
 import os
+import subprocess
 import random
 import cv2
 
@@ -35,6 +37,7 @@ def generateAudio(posttext):
         hours = minutes // 60
         minutes = minutes % 60
         return f"{hours:02}:{minutes:02}:{seconds:02},{millis:03}"
+    
     def split_text(text, max_length):
         words = text.split()
         lines = []
@@ -91,7 +94,6 @@ def generateBackgroundVideo(duration):
     # Resize video to mobile dimensions
     original_width, original_height = clippedVideo.size
     new_width = (original_height / 1920) * 1080
-    new_height = original_height
 
     x1 = (original_width - new_width) // 2
     x2 = x1 + new_width
@@ -101,16 +103,39 @@ def generateBackgroundVideo(duration):
     backgroundVideo = clippedVideo.crop(x1=x1, x2=x2, y1=y1, y2=y2)
     return backgroundVideo
 
+# Add subtitles
+def addSubtitles(input_video_path, srt_file):
+    output_video_path = os.path.join(script_dir, 'video.mp4')
+
+    # Open input video
+    in_stream = ffmpeg.input(input_video_path)
+
+    # Add subtitles filter
+    subtitle_filter = f"subtitles={srt_file}:force_style='Fontsize=24'"
+    out_stream = ffmpeg.filter(in_stream, 'subtitles', s=srt_file, force_style='Fontsize=24')
+
+    # Output codec settings
+    out_stream = out_stream.output(output_video_path, codec='libx264')
+
+    # Run ffmpeg-python command
+    ffmpeg.run(out_stream, overwrite_output=True)
+
+    return output_video_path
+
 # Stitch audio and video
 audio_filename, audio_duration, srt_file = generateAudio(posttext)
 backgroundVideo = generateBackgroundVideo(audio_duration)
 audio = AudioFileClip(audio_filename)
-video = backgroundVideo.set_audio(audio)
+video_with_audio = backgroundVideo.set_audio(audio)
 
-# Save
-video_path = os.path.join(script_dir, 'video.mp4')
-video.write_videofile(video_path, codec="libx264")
+# Temporarely save video without subtitles
+video_path = os.path.join(script_dir, 'video_with_audio.mp4')
+video_with_audio.write_videofile(video_path, codec="libx264")
 
-# Remove temporary files
+# Save the final video with subtitles
+video_path = addSubtitles(video_path, srt_file)
+
+# Clean up temporary files
+os.remove(os.path.join(script_dir, 'video_with_audio.mp4'))
 os.remove(audio_filename)
 os.remove(srt_file)
