@@ -5,6 +5,7 @@ import ffmpeg
 import shutil
 import random
 import wave
+import time
 import cv2
 import os
 
@@ -130,7 +131,7 @@ def addSubtitles(input_video_path, srt_file):
         # Styling
         video_with_subs = input_video.filter(
             'subtitles', srt_file, 
-            force_style='Fontname=Arial,Fontsize=16,PrimaryColour=&HFFFFFF&,OutlineColour=&H000000&,BorderStyle=3,Outline=3,Shadow=0,Alignment=8,MarginV=50'
+            force_style='Fontname=Arial,Fontsize=16,PrimaryColour=&HFFFFFF&,SecondaryColour=&ffffff&,OutlineColour=&H000000&,BackColour=&H000000&,Alignment=10'
         )
         
         # Output video
@@ -144,25 +145,36 @@ def addSubtitles(input_video_path, srt_file):
 
     return output_video_path
 
-# Generate audio and video
+# Generate audio
+script_start_time = time.time()
+start_time = time.time()
 audio_filename, audio_duration, srt_file = generateAudio(posttext)
-backgroundVideo = generateBackgroundVideo(audio_duration)
+print("Audio and subtitle file created. Time taken: " + str(time.time() - start_time) + "s")
 
-# Save background video temporarily
+# Generate video and save temporarily
+start_time = time.time()
+backgroundVideo = generateBackgroundVideo(audio_duration)
 temp_bg_video_path = os.path.join(script_dir, 'temporary/temp_bg_video.mp4')
-backgroundVideo.write_videofile(temp_bg_video_path, codec="libx264")
+backgroundVideo.write_videofile(temp_bg_video_path, codec="libx264", logger=None)
+print("Video file created. Time taken: " + str(time.time() - start_time) + "s")
 
 # Add subtitles to background video
+start_time = time.time()
 subtitled_video_path = addSubtitles(temp_bg_video_path, srt_file)
+print("Subtitles added. Time taken: " + str(time.time() - start_time) + "s")
 
 # Stitch audio into subtitled video
+start_time = time.time()
 final_video = VideoFileClip(subtitled_video_path)
 audio = AudioFileClip(audio_filename)
 final_video = final_video.set_audio(audio)
+print("Audio added. Time taken: " + str(time.time() - start_time) + "s")
 
 # Save the final video
+start_time = time.time()
 final_video_path = os.path.join(script_dir, 'video.mp4')
-final_video.write_videofile(final_video_path, codec="libx264")
+final_video.write_videofile(final_video_path, codec="libx264", logger=None)
+print("Final video compiled. Time taken: " + str(time.time() - start_time) + "s" + " Total time taken: " + str(time.time() - script_start_time) + "s")
 
 # Clean up temporary files
 shutil.rmtree(os.path.join(script_dir, 'temporary'))
