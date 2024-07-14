@@ -25,6 +25,8 @@ def generateAudio(posttext):
     engine = pyttsx3.init()
     rate = engine.getProperty('rate')
     engine.setProperty('rate', int(rate * 0.75))
+    voices = engine.getProperty('voices')
+    engine.setProperty('voice', voices[1].id)
 
     # Temporarily save audio to file
     temp_audio_filename = "temporary/temp_audio.wav"
@@ -145,8 +147,9 @@ def addSubtitles(input_video_path, srt_file):
 
     return output_video_path
 
-# Generate audio
 script_start_time = time.time()
+
+# Generate audio
 start_time = time.time()
 audio_filename, audio_duration, srt_file = generateAudio(posttext)
 print("Audio and subtitle file created. Time taken: " + str(time.time() - start_time) + "s")
