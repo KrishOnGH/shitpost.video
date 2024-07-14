@@ -1,13 +1,22 @@
 from moviepy.editor import VideoFileClip, AudioFileClip
-import ffmpeg
+import unidecode
 import pyttsx3
-import wave
-import os
+import ffmpeg
+import shutil
 import random
+import wave
 import cv2
+import os
 
+# Get post, background footage choice, and directory location for temporary storage
 script_dir = os.path.dirname(os.path.abspath(__file__))
+footage_type = 'minecraft'
 posttext = input("What is the post? ")
+posttext = unidecode.unidecode(posttext)
+
+# Create folder for temporary files
+if not os.path.exists(os.path.join(script_dir, 'temporary')):
+    os.makedirs(os.path.join(script_dir, 'temporary'))
 
 # Audio generation function
 def generateAudio(posttext):
@@ -17,7 +26,7 @@ def generateAudio(posttext):
     engine.setProperty('rate', int(rate * 0.75))
 
     # Temporarily save audio to file
-    temp_audio_filename = "temp_audio.wav"
+    temp_audio_filename = "temporary/temp_audio.wav"
     engine.save_to_file(posttext, temp_audio_filename)
     engine.runAndWait()
     
@@ -60,7 +69,7 @@ def generateAudio(posttext):
     duration_per_line = audio_duration / num_lines
 
     # Save SRT file
-    srt_filename = "subtitles.srt"
+    srt_filename = "temporary/subtitles.srt"
     with open(srt_filename, 'w') as srt_file:
         for i, line in enumerate(lines):
             start_time = i * duration_per_line
@@ -74,18 +83,21 @@ def generateAudio(posttext):
 
 # Video generation function
 def generateBackgroundVideo(duration):
-    # Get Minecraft gameplay
-    relative_video_path = './minecraftvideo.mp4'
+    # Get video
+    relative_video_path = f'backgroundfootage/{footage_type}.mp4'
     video_path = os.path.join(script_dir, relative_video_path)
 
-    # Get duration of gameplay video
+    # Get duration of video
     data = cv2.VideoCapture(video_path)
     frames = data.get(cv2.CAP_PROP_FRAME_COUNT)
     fps = data.get(cv2.CAP_PROP_FPS)
     seconds = round(frames / fps)
 
     # Clip random section of video
-    start = random.randint(10, seconds - 300)
+    if footage_type == "subway surfers":
+        start = random.randint(30, seconds - 360)
+    else:
+        start = random.randint(30, seconds - 180)
     end = start + duration + 3
 
     clippedVideo = VideoFileClip(video_path).subclip(start, end)
@@ -104,7 +116,7 @@ def generateBackgroundVideo(duration):
 
 # Add subtitles
 def addSubtitles(input_video_path, srt_file):
-    output_video_path = os.path.join(script_dir, 'video_with_subtitles.mp4')
+    output_video_path = os.path.join(script_dir, 'temporary/video_with_subtitles.mp4')
     
     ffmpeg_path = r"C:\ffmpeg\ffmpeg.exe"
     
@@ -112,14 +124,16 @@ def addSubtitles(input_video_path, srt_file):
         raise FileNotFoundError(f"FFmpeg not found at {ffmpeg_path}. Please install FFmpeg or update the path.")
 
     try:
-        # Input video stream
+        # Input video
         input_video = ffmpeg.input(input_video_path)
         
-        # Add subtitles filter with updated style
-        video_with_subs = input_video.filter('subtitles', srt_file, 
-            force_style='Fontname=Arial,Fontsize=16,PrimaryColour=&HFFFFFF&,OutlineColour=&H000000&,BorderStyle=3,Outline=1,Shadow=0')
+        # Styling
+        video_with_subs = input_video.filter(
+            'subtitles', srt_file, 
+            force_style='Fontname=Arial,Fontsize=16,PrimaryColour=&HFFFFFF&,OutlineColour=&H000000&,BorderStyle=3,Outline=3,Shadow=0,Alignment=8,MarginV=50'
+        )
         
-        # Output (note: we're not including audio here)
+        # Output video
         output = ffmpeg.output(video_with_subs, output_video_path, vcodec='libx264')
         output = output.overwrite_output()
         ffmpeg.run(output, cmd=ffmpeg_path, capture_stdout=True, capture_stderr=True)
@@ -135,7 +149,7 @@ audio_filename, audio_duration, srt_file = generateAudio(posttext)
 backgroundVideo = generateBackgroundVideo(audio_duration)
 
 # Save background video temporarily
-temp_bg_video_path = os.path.join(script_dir, 'temp_bg_video.mp4')
+temp_bg_video_path = os.path.join(script_dir, 'temporary/temp_bg_video.mp4')
 backgroundVideo.write_videofile(temp_bg_video_path, codec="libx264")
 
 # Add subtitles to background video
@@ -151,7 +165,4 @@ final_video_path = os.path.join(script_dir, 'video.mp4')
 final_video.write_videofile(final_video_path, codec="libx264")
 
 # Clean up temporary files
-os.remove(temp_bg_video_path)
-os.remove(subtitled_video_path)
-os.remove(audio_filename)
-os.remove(srt_file)
+shutil.rmtree(os.path.join(script_dir, 'temporary'))
