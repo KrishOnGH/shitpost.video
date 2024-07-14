@@ -3,7 +3,6 @@ import ffmpeg
 import pyttsx3
 import wave
 import os
-import subprocess
 import random
 import cv2
 
@@ -105,37 +104,54 @@ def generateBackgroundVideo(duration):
 
 # Add subtitles
 def addSubtitles(input_video_path, srt_file):
-    output_video_path = os.path.join(script_dir, 'video.mp4')
+    output_video_path = os.path.join(script_dir, 'video_with_subtitles.mp4')
+    
+    ffmpeg_path = r"C:\ffmpeg\ffmpeg.exe"
+    
+    if not os.path.exists(ffmpeg_path):
+        raise FileNotFoundError(f"FFmpeg not found at {ffmpeg_path}. Please install FFmpeg or update the path.")
 
-    # Open input video
-    in_stream = ffmpeg.input(input_video_path)
-
-    # Add subtitles filter
-    subtitle_filter = f"subtitles={srt_file}:force_style='Fontsize=24'"
-    out_stream = ffmpeg.filter(in_stream, 'subtitles', s=srt_file, force_style='Fontsize=24')
-
-    # Output codec settings
-    out_stream = out_stream.output(output_video_path, codec='libx264')
-
-    # Run ffmpeg-python command
-    ffmpeg.run(out_stream, overwrite_output=True)
+    try:
+        # Input video stream
+        input_video = ffmpeg.input(input_video_path)
+        
+        # Add subtitles filter with updated style
+        video_with_subs = input_video.filter('subtitles', srt_file, 
+            force_style='Fontname=Arial,Fontsize=16,PrimaryColour=&HFFFFFF&,OutlineColour=&H000000&,BorderStyle=3,Outline=1,Shadow=0')
+        
+        # Output (note: we're not including audio here)
+        output = ffmpeg.output(video_with_subs, output_video_path, vcodec='libx264')
+        output = output.overwrite_output()
+        ffmpeg.run(output, cmd=ffmpeg_path, capture_stdout=True, capture_stderr=True)
+        
+    except ffmpeg.Error as e:
+        print(f"FFmpeg error occurred: {e.stderr.decode()}")
+        raise
 
     return output_video_path
 
-# Stitch audio and video
+# Generate audio and video
 audio_filename, audio_duration, srt_file = generateAudio(posttext)
 backgroundVideo = generateBackgroundVideo(audio_duration)
+
+# Save background video temporarily
+temp_bg_video_path = os.path.join(script_dir, 'temp_bg_video.mp4')
+backgroundVideo.write_videofile(temp_bg_video_path, codec="libx264")
+
+# Add subtitles to background video
+subtitled_video_path = addSubtitles(temp_bg_video_path, srt_file)
+
+# Stitch audio into subtitled video
+final_video = VideoFileClip(subtitled_video_path)
 audio = AudioFileClip(audio_filename)
-video_with_audio = backgroundVideo.set_audio(audio)
+final_video = final_video.set_audio(audio)
 
-# Temporarely save video without subtitles
-video_path = os.path.join(script_dir, 'video_with_audio.mp4')
-video_with_audio.write_videofile(video_path, codec="libx264")
-
-# Save the final video with subtitles
-video_path = addSubtitles(video_path, srt_file)
+# Save the final video
+final_video_path = os.path.join(script_dir, 'video.mp4')
+final_video.write_videofile(final_video_path, codec="libx264")
 
 # Clean up temporary files
-os.remove(os.path.join(script_dir, 'video_with_audio.mp4'))
+os.remove(temp_bg_video_path)
+os.remove(subtitled_video_path)
 os.remove(audio_filename)
 os.remove(srt_file)
