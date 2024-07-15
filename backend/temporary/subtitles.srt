@@ -1,0 +1,16 @@
+1
+00:00:00,0 --> 00:00:02,210
+TEST this is a fucking test, this
+
+2
+00:00:02,210 --> 00:00:04,421
+script is being fucking tested right
+
+3
+00:00:04,421 --> 00:00:06,632
+now, does it fucking work? I don't know
+
+4
+00:00:06,632 --> 00:00:08,843
+lets find out!
+
