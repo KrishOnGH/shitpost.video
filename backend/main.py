@@ -1,4 +1,4 @@
-from moviepy.editor import VideoFileClip, AudioFileClip, CompositeVideoClip, TextClip
+from moviepy.editor import VideoFileClip, AudioFileClip, CompositeVideoClip, CompositeAudioClip, TextClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 from moviepy.config import change_settings
 import unidecode
@@ -117,7 +117,7 @@ def generateBackgroundVideo(duration):
 def addSubtitles(background_video, subtitle_file):
     def make_textclip(txt):
         # Create a TextClip with word wrapping and center alignment
-        txt_clip = TextClip(txt, fontsize=64, font='Arial', color='white', stroke_color='black', stroke_width=1,
+        txt_clip = TextClip(txt, fontsize=64, font='Arial', color='white', stroke_color='black', stroke_width=3,
                             size=background_video.size, method='caption', align='center')
         return txt_clip
 
@@ -149,13 +149,14 @@ print("Subtitles added. Time taken: {:.2f}s".format(time.time() - start_time))
 # Load audio and add to video
 start_time = time.time()
 audio = AudioFileClip(audio_filename)
-final_video = subtitled_video.set_audio(audio)
+audio = CompositeAudioClip([audio])
+final_video = subtitled_video
+final_video.audio = audio
 print("Audio added. Time taken: {:.2f}s".format(time.time() - start_time))
 
 # Save final video
 start_time = time.time()
-final_video_path = os.path.join(script_dir, 'video.mp4')
-final_video.write_videofile(final_video_path, codec="libx264", audio_codec="aac", logger=None)
+final_video.write_videofile("video.mp4")
 print("Final video compiled. Time taken: {:.2f}s".format(time.time() - start_time) + " Total time taken: " + str(time.time() - script_start_time))
 
 # Clean up temporary files
