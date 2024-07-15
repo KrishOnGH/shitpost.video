@@ -1,10 +1,11 @@
 from moviepy.editor import VideoFileClip, AudioFileClip, CompositeVideoClip, TextClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 from moviepy.config import change_settings
+import subprocess
 import unidecode
 import pyttsx3
-import shutil
 import random
+import shutil
 import wave
 import time
 import cv2
@@ -128,26 +129,31 @@ def addSubtitles(background_video, subtitle_file):
     
     return final_clip
 
-def save(video):
-    cap = cv2.VideoCapture(video)
+# Save video
+def save(video, audio):
+    output_video = "video.mp4"
 
-    # Get video properties
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    ffmpeg_command = [
+        "ffmpeg",
+        "-i", video,
+        "-i", audio,
+        "-vf", "scale=trunc(iw/2)*2:ih,format=yuv420p",
+        "-c:v", "libx264",
+        "-preset", "slow",
+        "-crf", "20",
+        "-c:a", "aac",
+        "-b:a", "160k",
+        "-movflags", "+faststart",
+        "-strict", "experimental",
+        "-map", "0:v:0",
+        "-map", "1:a:0",
+        output_video
+    ]
 
-    out = cv2.VideoWriter("video.mp4", cv2.VideoWriter_fourcc(*'avc1'), fps, (width, height))
-
-    # Read and write each frame to the output video file
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
-        
-        out.write(frame)
-
-    cap.release()
-    out.release()
+    try:
+        subprocess.run(ffmpeg_command, check=True)
+    except subprocess.CalledProcessError as e:
+        print(f"Error occurred: {e}")
 
 # Main script execution
 script_start_time = time.time()
@@ -179,12 +185,11 @@ try:
     # Write final video
     start_time = time.time()
     final_video.write_videofile('temporary/converting.mp4', logger=None)
-    save('temporary/converting.mp4')
+    save(os.path.join(script_dir, 'temporary/converting.mp4'), audio_filename)
     print("Final video compiled. Time taken: {:.2f}s".format(time.time() - start_time))
 
 except Exception as e:
     print(f"An error occurred: {e}")
-    # You might want to add more detailed error information here
 
 finally:
     # Clean up temporary files
