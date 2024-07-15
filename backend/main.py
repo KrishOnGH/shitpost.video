@@ -1,12 +1,12 @@
 from moviepy.editor import VideoFileClip, AudioFileClip, CompositeVideoClip, TextClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 from moviepy.config import change_settings
+from mutagen.mp3 import MP3
+from gtts import gTTS
 import subprocess
 import unidecode
-import pyttsx3
 import random
 import shutil
-import wave
 import time
 import cv2
 import os
@@ -26,23 +26,14 @@ if not os.path.exists(os.path.join(script_dir, 'temporary')):
 
 # Audio generation function
 def generateAudio(posttext):
-    # Init
-    engine = pyttsx3.init()
-    rate = engine.getProperty('rate')
-    engine.setProperty('rate', int(rate * 0.75))
-    voices = engine.getProperty('voices')
-    engine.setProperty('voice', voices[1].id)
-
-    # Save audio to file temporarily
+    # Generate and temporarily save audio
+    audio = gTTS(text=posttext, lang="en", slow=False, tld="com.au")
     temp_audio_filename = os.path.join(os.path.join(script_dir, 'temporary'), "temp_audio.mp3")
-    engine.save_to_file(posttext, temp_audio_filename)
-    engine.runAndWait()
+    audio.save(temp_audio_filename)
 
     # Get audio duration
-    with wave.open(temp_audio_filename, 'rb') as wf:
-        frames = wf.getnframes()
-        rate = wf.getframerate()
-        audio_duration = frames / float(rate)
+    audio = MP3(temp_audio_filename)
+    audio_duration = audio.info.length
 
     # Generate subtitle data
     def split_text(text, max_length):
@@ -135,6 +126,9 @@ def save(video, audio):
 
     ffmpeg_command = [
         "ffmpeg",
+        "-y",
+        "-nostats",
+        "-loglevel", "panic",
         "-i", video,
         "-i", audio,
         "-vf", "scale=trunc(iw/2)*2:ih,format=yuv420p",
