@@ -1,4 +1,4 @@
-from moviepy.editor import VideoFileClip, AudioFileClip, CompositeVideoClip, CompositeAudioClip, TextClip
+from moviepy.editor import VideoFileClip, AudioFileClip, CompositeVideoClip, TextClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 from moviepy.config import change_settings
 import unidecode
@@ -61,7 +61,7 @@ def generateAudio(posttext):
         
         return lines
 
-    max_length = 40
+    max_length = 10
     lines = split_text(posttext, max_length)
     subtitle_data = []
     duration_per_line = audio_duration / len(lines)
@@ -117,7 +117,7 @@ def generateBackgroundVideo(duration):
 def addSubtitles(background_video, subtitle_file):
     def make_textclip(txt):
         # Create a TextClip with word wrapping and center alignment
-        txt_clip = TextClip(txt, fontsize=64, font='Arial', color='white', stroke_color='black', stroke_width=3,
+        txt_clip = TextClip(txt, fontsize=128, font='Arial', color='white', stroke_color='black', stroke_width=5,
                             size=background_video.size, method='caption', align='center')
         return txt_clip
 
@@ -128,36 +128,66 @@ def addSubtitles(background_video, subtitle_file):
     
     return final_clip
 
+def save(video):
+    cap = cv2.VideoCapture(video)
+
+    # Get video properties
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    out = cv2.VideoWriter("video.mp4", cv2.VideoWriter_fourcc(*'avc1'), fps, (width, height))
+
+    # Read and write each frame to the output video file
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        
+        out.write(frame)
+
+    cap.release()
+    out.release()
+
 # Main script execution
 script_start_time = time.time()
 
-# Generate audio and subtitles in SRT format
-start_time = time.time()
-audio_filename, audio_duration, subtitle_file = generateAudio(posttext)
-print("Audio and subtitle data created. Time taken: {:.2f}s".format(time.time() - start_time))
+try:
+    # Generate audio and subtitles in SRT format
+    start_time = time.time()
+    audio_filename, audio_duration, subtitle_file = generateAudio(posttext)
+    print("Audio and subtitle data created. Time taken: {:.2f}s".format(time.time() - start_time))
 
-# Generate background video
-start_time = time.time()
-background_video = generateBackgroundVideo(audio_duration)
-print("Video file created. Time taken: {:.2f}s".format(time.time() - start_time))
+    # Generate background video
+    start_time = time.time()
+    background_video = generateBackgroundVideo(audio_duration)
+    print("Video file created. Time taken: {:.2f}s".format(time.time() - start_time))
 
-# Add subtitles to background video
-start_time = time.time()
-subtitled_video = addSubtitles(background_video, subtitle_file)
-print("Subtitles added. Time taken: {:.2f}s".format(time.time() - start_time))
+    # Add subtitles to background video
+    start_time = time.time()
+    subtitled_video = addSubtitles(background_video, subtitle_file)
+    print("Subtitles added. Time taken: {:.2f}s".format(time.time() - start_time))
 
-# Load audio and add to video
-start_time = time.time()
-audio = AudioFileClip(audio_filename)
-audio = CompositeAudioClip([audio])
-final_video = subtitled_video
-final_video.audio = audio
-print("Audio added. Time taken: {:.2f}s".format(time.time() - start_time))
+    # Load audio and add to video
+    start_time = time.time()
+    audio = AudioFileClip(audio_filename)
+    final_video = subtitled_video
+    final_video.set_audio(audio)
+    audio.close()
+    print("Audio added. Time taken: {:.2f}s".format(time.time() - start_time))
 
-# Save final video
-start_time = time.time()
-final_video.write_videofile("video.mp4")
-print("Final video compiled. Time taken: {:.2f}s".format(time.time() - start_time) + " Total time taken: " + str(time.time() - script_start_time))
+    # Write final video
+    start_time = time.time()
+    final_video.write_videofile('temporary/converting.mp4', logger=None)
+    save('temporary/converting.mp4')
+    print("Final video compiled. Time taken: {:.2f}s".format(time.time() - start_time))
 
-# Clean up temporary files
-shutil.rmtree(os.path.join(script_dir, 'temporary'))
+except Exception as e:
+    print(f"An error occurred: {e}")
+    # You might want to add more detailed error information here
+
+finally:
+    # Clean up temporary files
+    shutil.rmtree(os.path.join(script_dir, 'temporary'), ignore_errors=True)
+
+print("Total time taken: {:.2f}s".format(time.time() - script_start_time))
