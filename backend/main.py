@@ -1,13 +1,17 @@
-from moviepy.editor import VideoFileClip, AudioFileClip
+from moviepy.editor import VideoFileClip, AudioFileClip, CompositeVideoClip, TextClip
+from moviepy.video.tools.subtitles import SubtitlesClip
+from moviepy.config import change_settings
 import unidecode
 import pyttsx3
-import ffmpeg
 import shutil
 import random
 import wave
 import time
 import cv2
 import os
+
+IMAGEMAGICK_PATH = r"C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe"
+change_settings({"IMAGEMAGICK_BINARY": IMAGEMAGICK_PATH})
 
 # Get post, background footage choice, and directory location for temporary storage
 script_dir = os.path.dirname(os.path.abspath(__file__))
@@ -39,16 +43,7 @@ def generateAudio(posttext):
         rate = wf.getframerate()
         audio_duration = frames / float(rate)
 
-    # Generate SRT file
-    def format_time(seconds):
-        millis = int((seconds - int(seconds)) * 1000)
-        seconds = int(seconds)
-        minutes = seconds // 60
-        seconds = seconds % 60
-        hours = minutes // 60
-        minutes = minutes % 60
-        return f"{hours:02}:{minutes:02}:{seconds:02},{millis:03}"
-    
+    # Generate subtitle data
     def split_text(text, max_length):
         words = text.split()
         lines = []
@@ -71,18 +66,15 @@ def generateAudio(posttext):
     num_lines = len(lines)
     duration_per_line = audio_duration / num_lines
 
-    # Save SRT file
-    srt_filename = "temporary/subtitles.srt"
-    with open(srt_filename, 'w') as srt_file:
-        for i, line in enumerate(lines):
-            start_time = i * duration_per_line
-            end_time = start_time + duration_per_line
-            srt_file.write(f"{i + 1}\n")
-            srt_file.write(f"{format_time(start_time)} --> {format_time(end_time)}\n")
-            srt_file.write(f"{line}\n\n")
+    # Generate subtitle data
+    subtitles = []
+    for i, line in enumerate(lines):
+        start_time = i * duration_per_line
+        end_time = start_time + duration_per_line
+        subtitles.append(((start_time, end_time), line))
 
-    # Return audio file path, audio duration, and SRT file path
-    return temp_audio_filename, audio_duration, srt_filename
+    # Return audio file path, audio duration, and subtitle data
+    return temp_audio_filename, audio_duration, subtitles
 
 # Video generation function
 def generateBackgroundVideo(duration):
@@ -117,66 +109,42 @@ def generateBackgroundVideo(duration):
     backgroundVideo = clippedVideo.crop(x1=x1, x2=x2, y1=y1, y2=y2)
     return backgroundVideo
 
-# Add subtitles
-def addSubtitles(input_video_path, srt_file):
-    output_video_path = os.path.join(script_dir, 'temporary/video_with_subtitles.mp4')
-    
-    ffmpeg_path = r"C:\ffmpeg\ffmpeg.exe"
-    
-    if not os.path.exists(ffmpeg_path):
-        raise FileNotFoundError(f"FFmpeg not found at {ffmpeg_path}. Please install FFmpeg or update the path.")
+# Add subtitles using MoviePy
+def addSubtitles(backgroundVideo, subtitles):
+    def make_textclip(txt, fontsize=16, font='Arial', color='white', stroke_color='black', stroke_width=1):
+        return TextClip(txt, fontsize=fontsize, font=font, color=color, stroke_color=stroke_color, stroke_width=stroke_width)
 
-    try:
-        # Input video
-        input_video = ffmpeg.input(input_video_path)
-        
-        # Styling
-        video_with_subs = input_video.filter(
-            'subtitles', srt_file, 
-            force_style='Fontname=Arial,Fontsize=16,PrimaryColour=&HFFFFFF&,SecondaryColour=&ffffff&,OutlineColour=&H000000&,BackColour=&H000000&,Alignment=10'
-        )
-        
-        # Output video
-        output = ffmpeg.output(video_with_subs, output_video_path, vcodec='libx264')
-        output = output.overwrite_output()
-        ffmpeg.run(output, cmd=ffmpeg_path, capture_stdout=True, capture_stderr=True)
-        
-    except ffmpeg.Error as e:
-        print(f"FFmpeg error occurred: {e.stderr.decode()}")
-        raise
-
-    return output_video_path
+    subtitles_clip = SubtitlesClip(subtitles, make_textclip)
+    final_clip = CompositeVideoClip([backgroundVideo, subtitles_clip.set_position(('center', 'bottom'))])
+    return final_clip
 
 script_start_time = time.time()
 
 # Generate audio
 start_time = time.time()
-audio_filename, audio_duration, srt_file = generateAudio(posttext)
-print("Audio and subtitle file created. Time taken: " + str(time.time() - start_time) + "s")
+audio_filename, audio_duration, subtitles = generateAudio(posttext)
+print("Audio and subtitle data created. Time taken: " + str(time.time() - start_time) + "s")
 
-# Generate video and save temporarily
+# Generate video
 start_time = time.time()
 backgroundVideo = generateBackgroundVideo(audio_duration)
-temp_bg_video_path = os.path.join(script_dir, 'temporary/temp_bg_video.mp4')
-backgroundVideo.write_videofile(temp_bg_video_path, codec="libx264", logger=None)
 print("Video file created. Time taken: " + str(time.time() - start_time) + "s")
 
 # Add subtitles to background video
 start_time = time.time()
-subtitled_video_path = addSubtitles(temp_bg_video_path, srt_file)
+subtitled_video = addSubtitles(backgroundVideo, subtitles)
 print("Subtitles added. Time taken: " + str(time.time() - start_time) + "s")
 
-# Stitch audio into subtitled video
+# Load audio and add to subtitled video
 start_time = time.time()
-final_video = VideoFileClip(subtitled_video_path)
 audio = AudioFileClip(audio_filename)
-final_video = final_video.set_audio(audio)
+final_video = subtitled_video.set_audio(audio)
 print("Audio added. Time taken: " + str(time.time() - start_time) + "s")
 
 # Save the final video
 start_time = time.time()
 final_video_path = os.path.join(script_dir, 'video.mp4')
-final_video.write_videofile(final_video_path, codec="libx264", logger=None)
+final_video.write_videofile(final_video_path, codec="libx264", audio_codec="aac", logger=None)
 print("Final video compiled. Time taken: " + str(time.time() - start_time) + "s" + " Total time taken: " + str(time.time() - script_start_time) + "s")
 
 # Clean up temporary files
