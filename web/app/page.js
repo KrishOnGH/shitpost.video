@@ -1,9 +1,15 @@
 "use client"
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { TiTick } from "react-icons/ti";
+import io from 'socket.io-client'
 
 function App() {
   const [text, setText] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
+  const [progress, setProgress] = useState(1);
+  const [complete, setComplete] = useState(false)
+  const [socket, setSocket] = useState(null);
+  const steps = ["Audio Generated", "Video Generated", "Subtitles Added", "Compiled"]
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,24 +35,43 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <form onSubmit={handleSubmit}>
-        <label>
-          Enter text for subtitles:
-          <input
-            type="text"
-            value={text}
-            onChange={(e) => setText(e.target.value)}
-          />
-        </label>
-        <button type="submit">Generate Video</button>
-      </form>
-      {videoUrl && (
-        <div>
-          <h2>Generated Video:</h2>
-          <video controls src={videoUrl} />
-        </div>
-      )}
+    <div className='bg-[#202020] flex flex-col gap-[7rem] items-center justify-center'>
+      <div className="flex items-start h-screen w-screen mt-10 justify-between">
+        {steps?.map((step, i) => (
+          <div
+            key={i}
+            className={`step-item ${progress === i + 1 && "active"} ${
+              (i + 1 < progress || complete) && "complete"
+            } `}
+          >
+            <div className="step">
+              {i + 1 < progress || complete ? <TiTick size={24} /> : i + 1}
+            </div>
+            <p className="text-gray-500">{step}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className='flex flex-col'>
+        <form onSubmit={handleSubmit}>
+          <label>
+            Enter text for subtitles:
+            <input
+              type="text"
+              className='text-black'
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+            />
+          </label>
+          <button type="submit">Generate Video</button>
+        </form>
+        {videoUrl && (
+          <div>
+            <h2>Generated Video:</h2>
+            <video controls src={videoUrl} />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

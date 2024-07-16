@@ -1,6 +1,6 @@
 
 from generate_video import generateAudio, generateBackgroundVideo, addSubtitles
-from flask import Flask, request, jsonify
+from flask import Flask, request, send_file
 from moviepy.editor import AudioFileClip
 from unidecode import unidecode
 from flask_cors import CORS
@@ -85,7 +85,7 @@ def generate_video():
         # Save the combined video with audio
         save(final_video_path, audio_filename)
         
-        return jsonify({'path': final_video_path})
+        return send_file(os.path.join(script_dir, 'video.mp4'), as_attachment=True, download_name='video.mp4')
 
     except Exception as e:
         print(f"An error occurred: {e}")
