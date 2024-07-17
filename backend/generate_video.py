@@ -152,10 +152,14 @@ def generateBackgroundVideo(duration, footage_type):
     return backgroundVideo
 
 # Add subtitles
-def addSubtitles(background_video, subtitle_file):
+def addSubtitles(background_video, subtitle_file, color):
     def make_textclip(txt):
+        stroke = 'black'
+        if color == 'purple':
+            stroke == 'white'
+
         # Create a TextClip with word wrapping and center alignment
-        txt_clip = TextClip(txt, fontsize=128, font='Arial', color='white', stroke_color='black', stroke_width=5,
+        txt_clip = TextClip(txt, fontsize=86, font='Arial', color=color, stroke_color=stroke, stroke_width=3,
                             size=background_video.size, method='caption', align='center')
         return txt_clip
 

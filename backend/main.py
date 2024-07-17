@@ -56,6 +56,7 @@ def generate_video():
     data = request.get_json()
     posttext = data.get('post')
     footage_type = data.get('footage_type')
+    subtitle_color = data.get('subtitle_color')
     username = data.get('username')
     posttext = unidecode(posttext)
 
@@ -77,7 +78,7 @@ def generate_video():
 
         # Add subtitles to background video
         start = time.time()
-        subtitled_video = addSubtitles(background_video, subtitle_file)
+        subtitled_video = addSubtitles(background_video, subtitle_file, subtitle_color)
         print(f"{username} has completed step 3 in {str(time.time()-start)}s")
         emit_progress(username, 4)
 
