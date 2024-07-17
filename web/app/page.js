@@ -1,18 +1,31 @@
 "use client"
 import React, { useEffect, useState } from 'react';
 import { TiTick } from "react-icons/ti";
-import io from 'socket.io-client'
+import { io } from 'socket.io-client'
 
 function App() {
   const [text, setText] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [progress, setProgress] = useState(0);
-  const username = Math.random()
-  const steps = ["Audio Generated", "Video Generated", "Subtitles Added", "Compiled"]
+  const [username] = useState(() => Math.random().toString(36).substring(7));
+  const steps = ["Audio Generated", "Video Generated", "Subtitles Added", "Compiled"];
+
+  useEffect(() => {
+    const socket = io('http://localhost:5000');
+    socket.on('progress', (data) => {
+      if (data.username === username) {
+        setProgress(data.step);
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [username]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setProgress(0);
+    setProgress(1);
     try {
       const response = await fetch('http://localhost:5000/generate-video', {
         method: 'POST',
@@ -25,7 +38,6 @@ function App() {
       if (!response.ok) {
         throw new Error('Network response was not ok');
       }
-
       const blob = await response.blob();
       const url = URL.createObjectURL(new Blob([blob], { type: 'video/mp4' }));
       setVideoUrl(url);
@@ -33,7 +45,7 @@ function App() {
     } catch (error) {
       console.error('Error generating video:', error);
     }
-  };
+  }
 
   const handleDownload = () => {
     if (videoUrl) {
@@ -54,7 +66,7 @@ function App() {
 
   return (
     <div className='bg-[#202020] w-[100vw] flex flex-col justify-start min-h-screen'>
-      <div className="flex w-full pt-4 mt-10 pb-2 items-start justify-between bg-[#202020]">
+      <div className="absolute flex w-full pt-4 mt-10 pb-2 items-start justify-between bg-[#202020]">
         {steps?.map((step, i) => (
           <div
             key={i}
@@ -79,13 +91,13 @@ function App() {
                   Enter text for subtitles:
                 </div>
                 <input
-                  className='text-black ml-3 mb-[13.75rem]'
+                  className='text-black ml-3'
                   type="text"
                   value={text}
                   onChange={(e) => setText(e.target.value)}
                 />
               </label>
-              <button className='text-2xl ml-20 mb-[13.5rem] rounded-3xl bg-blue-700 p-5' type="submit">Generate Video</button>
+              <button className='text-2xl ml-20 rounded-3xl bg-blue-700 p-5' type="submit">Generate Video</button>
             </form>
           </div>
         )}

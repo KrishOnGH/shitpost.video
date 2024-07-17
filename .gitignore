@@ -1,5 +1,9 @@
 backend/backgroundfootage/minecraft.mp4
 backend/backgroundfootage/subway surfers.mp4
 backend/video.mp4
-backend/__pycache__
-.pyc*
+*.pyc
+*.mp4
+*.mp3
+*.csv
+*.srt
+/backend/__pycache__
