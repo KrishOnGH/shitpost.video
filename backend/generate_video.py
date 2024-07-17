@@ -18,7 +18,7 @@ change_settings({"IMAGEMAGICK_BINARY": IMAGEMAGICK_PATH})
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Generate SRT file
-def generateSRT(input_audio):
+def generateSRT(input_audio, username):
     def transcribe(audio):
         model = WhisperModel("base")
         segments, info = model.transcribe(audio, vad_filter=False, vad_parameters=dict(min_silence_duration_ms=100))
@@ -28,7 +28,7 @@ def generateSRT(input_audio):
 
     def formattedtime(seconds):
         final_time = time.strftime("%H:%M:%S", time.gmtime(float(seconds)))
-        milliseconds = seconds.split('.')[1].ljust(3, '0')  # Ensure milliseconds are always three digits
+        milliseconds = seconds.split('.')[1].ljust(3, '0')
         return f"{final_time},{milliseconds}"
 
     def writetocsv(segments, output_folder):
@@ -87,7 +87,7 @@ def generateSRT(input_audio):
                 srt_file.write(row)
         return srt_output
 
-    output_folder = "temporary/subtitles"
+    output_folder = f"temporary{username}/subtitles"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
         
@@ -103,10 +103,10 @@ def generateSRT(input_audio):
     return f"{output_folder}/output.srt"
 
 # Audio generation function
-def generateAudio(posttext):
+def generateAudio(posttext, username):
     # Generate and temporarily save audio
     audio = gTTS(text=posttext, lang="en", slow=False, tld="com.au")
-    temp_audio_filename = os.path.join(os.path.join(script_dir, 'temporary'), "temp_audio.mp3")
+    temp_audio_filename = os.path.join(os.path.join(script_dir, f'temporary{username}'), "temp_audio.mp3")
     audio.save(temp_audio_filename)
 
     # Get audio duration
@@ -114,7 +114,7 @@ def generateAudio(posttext):
     audio_duration = audio.info.length
 
     # Generate subtitle data
-    subtitle_file = generateSRT(temp_audio_filename)
+    subtitle_file = generateSRT(temp_audio_filename, username)
 
     return temp_audio_filename, audio_duration, subtitle_file
 

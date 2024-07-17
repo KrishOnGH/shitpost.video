@@ -5,10 +5,8 @@ from moviepy.editor import AudioFileClip
 from unidecode import unidecode
 from flask_cors import CORS
 import subprocess
-import tempfile
 import shutil
 import time
-import uuid
 import os
 
 app = Flask(__name__)
@@ -21,8 +19,8 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 script_start_time = time.time()
 
 # Save video function
-def save(video, audio):
-    output_video = "video.mp4"
+def save(video, audio, username):
+    output_video = f"video{username}.mp4"
 
     ffmpeg_command = [
         "ffmpeg",
@@ -54,17 +52,16 @@ def generate_video():
     data = request.get_json()
     posttext = data.get('post')
     footage_type = data.get('footage_type')
+    username = data.get('username')
     posttext = unidecode(posttext)
 
-    temp_dir = tempfile.mkdtemp(prefix="tmp_video_", suffix=f"_{uuid.uuid4()}")
-
     # Create folder for temporary files
-    if not os.path.exists(os.path.join(script_dir, 'temporary')):
-        os.makedirs(os.path.join(script_dir, 'temporary'))
+    if not os.path.exists(os.path.join(script_dir, f'temporary{username}')):
+        os.makedirs(os.path.join(script_dir, f'temporary{username}'))
 
     try:
         # Generate audio and subtitles in SRT format
-        audio_filename, audio_duration, subtitle_file = generateAudio(posttext)
+        audio_filename, audio_duration, subtitle_file = generateAudio(posttext, username)
 
         # Generate background video
         background_video = generateBackgroundVideo(audio_duration, footage_type)
@@ -79,19 +76,19 @@ def generate_video():
         audio.close()
 
         # Write final video
-        final_video_path = os.path.join(script_dir, 'temporary', 'converting.mp4')
+        final_video_path = os.path.join(script_dir, f'temporary{username}', 'converting.mp4')
         final_video.write_videofile(final_video_path, codec='libx264', audio_codec='aac', temp_audiofile='temp-audio.m4a', remove_temp=True, logger=None)
 
         # Save the combined video with audio
-        save(final_video_path, audio_filename)
+        save(final_video_path, audio_filename, username)
         
-        return send_file(os.path.join(script_dir, 'video.mp4'), as_attachment=True, download_name='video.mp4')
+        return send_file(os.path.join(script_dir, f'video{username}.mp4'), as_attachment=True, download_name='video.mp4')
 
     except Exception as e:
         print(f"An error occurred: {e}")
 
     finally:
-        shutil.rmtree('temporary', ignore_errors=True)
+        shutil.rmtree(f'temporary{username}', ignore_errors=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
