@@ -1,6 +1,6 @@
 
 from generate_video import generateAudio, generateBackgroundVideo, addSubtitles
-from fetch import fetch_aita_post, fetch_askreddit_post
+from fetch import fetch_aita_post, fetch_askreddit_post, fetch_from_link
 from flask import Flask, request, send_file
 from flask_socketio import SocketIO
 from unidecode import unidecode
@@ -55,16 +55,27 @@ def emit_progress(username, step):
 @app.route('/generate-video', methods=['POST'])
 def generate_video():
     data = request.get_json()
-    posttext = data.get('post')
+    link = data.get('link')
     footage_type = data.get('footage_type')
     subtitle_color = data.get('subtitle_color')
     username = data.get('username')
-    posttext = unidecode(posttext)
+    result = fetch_from_link(link)
+    print(result)
 
     if not os.path.exists(os.path.join(script_dir, f'temporary{username}')):
         os.makedirs(os.path.join(script_dir, f'temporary{username}'))
 
     try:
+        if result:
+            if result["top_comment"]["content"]:
+                posttext = result['content'] + ', ' + result['top_comment']['content']
+                print("askreddit")
+            else:
+                posttext = result['content']
+                print("aita")
+        else:
+            return "Link not sufficient", 500
+
         # Generate audio and subtitles in SRT format
         start = time.time()
         audio_filename, audio_duration, subtitle_file = generateAudio(posttext, username)

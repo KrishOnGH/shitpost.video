@@ -16,10 +16,9 @@ function App() {
       setUsername(newUsername);
       localStorage.setItem('user', newUsername);
     }
-    print(username)
   }, []);
 
-  const [text, setText] = useState('');
+  const [link, setLink] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [progress, setProgress] = useState(0);
   const [selectedFootage, setSelectedFootage] = useState('minecraft');
@@ -41,23 +40,28 @@ function App() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setProgress(1);
     try {
-      const response = await fetch('http://localhost:5000/generate-video', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ "post": text, "footage_type": selectedFootage, "subtitle_color": subtitleColor, "username": username}),
-      });
+      if (link.toLowerCase().startsWith('https://www.reddit.com/r/amitheasshole/comments/') || link.toLowerCase().startsWith('https://www.reddit.com/r/askreddit/comments/')) {
+        setProgress(1);
+        const response = await fetch('http://localhost:5000/generate-video', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ "link": link, "footage_type": selectedFootage, "subtitle_color": subtitleColor, "username": username}),
+        });
 
-      if (!response.ok) {
-        throw new Error('Network response was not ok');
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        const blob = await response.blob();
+        const url = URL.createObjectURL(new Blob([blob], { type: 'video/mp4' }));
+        setVideoUrl(url);
+        setProgress(5);
+      } else {
+        console.log('hi')
+        window.alert("Link must be of AITA or AskReddit subreddit post.")
       }
-      const blob = await response.blob();
-      const url = URL.createObjectURL(new Blob([blob], { type: 'video/mp4' }));
-      setVideoUrl(url);
-      setProgress(5);
     } catch (error) {
       console.error('Error generating video:', error);
     }
@@ -76,7 +80,7 @@ function App() {
 
   const handleRetry = () => {
     setProgress(0);
-    setText('');
+    setLink('');
     setVideoUrl('');
   };
 
@@ -105,13 +109,13 @@ function App() {
               <div className='w-full max-w-2xl mx-auto'>
                 <label className='block mb-8'>
                   <div className='mb-2 text-3xl'>
-                    Enter text for subtitles:
+                    Enter reddit link (AITA/AskReddit):
                   </div>
                   <input
                     className='text-black w-full p-2 rounded'
                     type="text"
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
+                    value={link}
+                    onChange={(e) => setLink(e.target.value)}
                     required
                   />
                 </label>

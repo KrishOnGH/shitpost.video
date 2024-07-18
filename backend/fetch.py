@@ -11,6 +11,48 @@ reddit = praw.Reddit(
     password=os.getenv('password')
 )
 
+def fetch_from_link(link):
+    try:
+        # Fetch the submission from the link
+        submission = reddit.submission(url=link)
+        submission = reddit.submission(id=submission)
+        print(submission.comments)
+
+        # Basic post info
+        post_info = {
+            'content': submission.selftext,
+            'title': submission.title,
+            'author': submission.author.name if submission.author else '[deleted]'
+        }
+
+        # Check the subreddit
+        if submission.subreddit.display_name.lower() == "amitheasshole":
+            return post_info
+        
+        elif submission.subreddit.display_name.lower() == "askreddit":
+            # Sort comments by top and limit to 10
+            submission.comment_sort = 'top'
+            submission.comments.replace_more(limit=0)
+            top_comments = submission.comments[:10]
+            
+            # Find the lengthiest comment among top 10
+            longest_comment = max(top_comments, key=lambda c: len(c.body) if not isinstance(c, praw.models.MoreComments) else 0)
+            
+            post_info['top_comment'] = {
+                'content': longest_comment.body,
+                'author': longest_comment.author.name if longest_comment.author else '[deleted]',
+                'score': longest_comment.score
+            }
+            
+            return post_info
+        
+        else:
+            return None
+        
+    except Exception as e:
+        print(e)
+        return None
+
 def fetch_aita_post(username):
     # Get the subreddit
     subreddit = reddit.subreddit("AmItheAsshole")
@@ -120,5 +162,8 @@ def fetch_askreddit_post(username):
             return None
     else:
         return None
+        print('subreddit not found')
 
-    print('subreddit not found')
+if __name__ == '__main__':
+    link = input("link: ")
+    print(fetch_from_link(link))
