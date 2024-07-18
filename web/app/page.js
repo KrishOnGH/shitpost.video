@@ -4,10 +4,23 @@ import { TiTick } from "react-icons/ti";
 import { io } from 'socket.io-client'
 
 function App() {
+  const [username, setUsername] = useState('');
+
+  useEffect(() => {
+    let user = localStorage.getItem('user');
+    console.log(user)
+    if (user) {
+      setUsername(user);
+    } else {
+      const newUsername = Math.random().toString(36).substring(7);
+      setUsername(newUsername);
+      localStorage.setItem('user', newUsername);
+    }
+  }, []);
+
   const [text, setText] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [progress, setProgress] = useState(0);
-  const [username, setUsername] = useState(Math.random().toString(36).substring(7));
   const [selectedFootage, setSelectedFootage] = useState('minecraft');
   const [subtitleColor, setSubtitleColor] = useState('white');
   const steps = ["Audio Generated", "Video Generated", "Subtitles Added", "Compiled"];
