@@ -7,3 +7,4 @@ backend/video.mp4
 *.csv
 *.srt
 /backend/__pycache__
+*.env

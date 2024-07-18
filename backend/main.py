@@ -1,5 +1,6 @@
 
 from generate_video import generateAudio, generateBackgroundVideo, addSubtitles
+from fetch import fetch_aita_post, fetch_askreddit_post
 from flask import Flask, request, send_file
 from flask_socketio import SocketIO
 from unidecode import unidecode

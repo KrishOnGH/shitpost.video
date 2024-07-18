@@ -16,6 +16,7 @@ function App() {
       setUsername(newUsername);
       localStorage.setItem('user', newUsername);
     }
+    print(username)
   }, []);
 
   const [text, setText] = useState('');
@@ -41,7 +42,6 @@ function App() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setProgress(1);
-    setUsername(Math.random().toString(36).substring(7))
     try {
       const response = await fetch('http://localhost:5000/generate-video', {
         method: 'POST',
