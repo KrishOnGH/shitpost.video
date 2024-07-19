@@ -6,6 +6,7 @@ from flask_socketio import SocketIO
 from unidecode import unidecode
 from flask_cors import CORS
 import subprocess
+import random
 import shutil
 import time
 import os
@@ -51,6 +52,23 @@ def save(video, audio, username):
 
 def emit_progress(username, step):
     socketio.emit('progress', {'username': username, 'step': step})
+
+@app.route('/generate-link', methods=['POST'])
+def generate_link():
+    data = request.get_json()
+    username = data.get('username')
+
+    try:
+        subreddit = random.randint(1, 2)
+        if subreddit == 1:
+            data = fetch_aita_post(username)
+            return data.url
+        elif subreddit == 2:
+            data = fetch_askreddit_post(username)
+            return data.url
+    
+    except Exception as e:
+        print(f"An error occurred: {e}")
 
 @app.route('/generate-video', methods=['POST'])
 def generate_video():

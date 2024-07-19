@@ -14,9 +14,7 @@ reddit = praw.Reddit(
 def fetch_from_link(link):
     try:
         # Fetch the submission from the link
-        submission = reddit.submission(url=link)
-        submission = reddit.submission(id=submission)
-        print(submission.comments)
+        submission = reddit.comment(url=link)
 
         # Basic post info
         post_info = {
@@ -92,6 +90,7 @@ def fetch_aita_post(username):
     if filtered_posts:
         chosen_post = filtered_posts[0]
         return {
+            'url': chosen_post.url,
             'content': chosen_post.selftext,
             'title': chosen_post.title,
             'author': chosen_post.author.name if chosen_post.author else '[deleted]'
@@ -149,6 +148,7 @@ def fetch_askreddit_post(username):
         # Return post
         if best_comment:
             return {
+                'url': chosen_post.url,
                 'content': chosen_post.selftext,
                 'title': chosen_post.title,
                 'author': chosen_post.author.name if chosen_post.author else '[deleted]',
@@ -163,7 +163,3 @@ def fetch_askreddit_post(username):
     else:
         return None
         print('subreddit not found')
-
-if __name__ == '__main__':
-    link = input("link: ")
-    print(fetch_from_link(link))
