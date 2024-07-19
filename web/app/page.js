@@ -59,7 +59,6 @@ function App() {
         setVideoUrl(url);
         setProgress(5);
       } else {
-        console.log('hi')
         window.alert("Link must be of AITA or AskReddit subreddit post.")
       }
     } catch (error) {
@@ -105,6 +104,15 @@ function App() {
     }
   }
 
+  const openlink = async (e) => {
+    e.preventDefault();
+    if (link.toLowerCase().startsWith('https://www.reddit.com/r/amitheasshole/comments/') || link.toLowerCase().startsWith('https://www.reddit.com/r/askreddit/comments/')) {
+      window.open(link)
+    } else {
+      window.alert("Link must be of AITA or AskReddit subreddit post.")
+    }
+  }
+
   return (
     <div className='bg-[#202020] w-[100vw] flex flex-col justify-start min-h-screen'>
       <div className="flex w-full pt-4 mt-10 pb-2 items-start justify-between bg-[#202020]">
@@ -134,8 +142,18 @@ function App() {
                   </div>
 
                   <div className='relative flex'>
+                    <button 
+                      onClick={openlink}
+                      className="absolute left-3 bottom-[1rem] text-indigo-500 cursor-pointer"
+                    >
+                      <svg height="24px" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M9 15L15 9M15 9H10.5M15 9V13.5" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M22 12C22 16.714 22 19.0711 20.5355 20.5355C19.0711 22 16.714 22 12 22C7.28595 22 4.92893 22 3.46447 20.5355C2 19.0711 2 16.714 2 12C2 7.28595 2 4.92893 3.46447 3.46447C4.92893 2 7.28595 2 12 2C16.714 2 19.0711 2 20.5355 3.46447C21.5093 4.43821 21.8356 5.80655 21.9449 8" stroke="#6366f1" stroke-width="1.5" stroke-linecap="round"/>
+                      </svg>
+                    </button>
+
                     <input
-                      className='text-black w-full p-2 rounded'
+                      className='text-black w-full p-2 px-12 rounded'
                       type="text"
                       value={link}
                       onChange={(e) => setLink(e.target.value)}
@@ -144,7 +162,7 @@ function App() {
 
                     <button 
                       onClick={generatelink}
-                      className="absolute right-3 bottom-[1.15rem] text-indigo-500 cursor-pointer"
+                      className="absolute right-3 bottom-[1rem] text-indigo-500 cursor-pointer"
                     >
                       <svg version="1.0" xmlns="http://www.w3.org/2000/svg"
                         className="w-8 h-6"

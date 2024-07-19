@@ -11,6 +11,8 @@ reddit = praw.Reddit(
     password=os.getenv('password')
 )
 
+print(reddit.user.me())
+
 def fetch_from_link(link):
     try:
         # Fetch the submission from the link
@@ -161,5 +163,5 @@ def fetch_askreddit_post(username):
         else:
             return None
     else:
-        return None
         print('subreddit not found')
+        return None
