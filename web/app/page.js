@@ -21,7 +21,7 @@ function App() {
   const [link, setLink] = useState('');
   const [videoUrl, setVideoUrl] = useState('');
   const [progress, setProgress] = useState(0);
-  const [selectedFootage, setSelectedFootage] = useState('minecraft');
+  const [selectedFootage, setSelectedFootage] = useState('Minecraft');
   const [subtitleColor, setSubtitleColor] = useState('white');
   const steps = ["Audio Generated", "Video Generated", "Subtitles Added", "Compiled"];
 
@@ -228,8 +228,8 @@ function App() {
                       type="radio"
                       className="form-radio h-5 w-5 text-blue-600"
                       name="footageType"
-                      value="minecraft"
-                      checked={selectedFootage === 'minecraft'}
+                      value="Minecraft"
+                      checked={selectedFootage === 'Minecraft'}
                       onChange={(e) => setSelectedFootage(e.target.value)}
                     />
                     <span className="ml-2 mr-4 text-xl">Minecraft</span>
@@ -240,11 +240,35 @@ function App() {
                       type="radio"
                       className="form-radio h-5 w-5 text-blue-600"
                       name="footageType"
-                      value="subway surfers"
-                      checked={selectedFootage === 'subway surfers'}
+                      value="Subway Surfers"
+                      checked={selectedFootage === 'Subway Surfers'}
                       onChange={(e) => setSelectedFootage(e.target.value)}
                     />
-                    <span className="ml-2 text-xl">Subway Surfers</span>
+                    <span className="ml-2 mr-4 text-xl">Subway Surfers</span>
+                  </label>
+
+                  <label className='flex items-center'>
+                    <input
+                      type="radio"
+                      className="form-radio h-5 w-5 text-blue-600"
+                      name="footageType"
+                      value="GTA"
+                      checked={selectedFootage === 'GTA'}
+                      onChange={(e) => setSelectedFootage(e.target.value)}
+                    />
+                    <span className="ml-2 mr-4 text-xl">GTA</span>
+                  </label>
+      
+                  <label className='flex items-center'>
+                    <input
+                      type="radio"
+                      className="form-radio h-5 w-5 text-blue-600"
+                      name="footageType"
+                      value="Satisfying"
+                      checked={selectedFootage === 'Satisfying'}
+                      onChange={(e) => setSelectedFootage(e.target.value)}
+                    />
+                    <span className="ml-2 text-xl">Satisfying</span>
                   </label>
                 </div>
 

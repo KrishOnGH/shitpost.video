@@ -121,7 +121,7 @@ def generateAudio(posttext, username):
 # Video generation function
 def generateBackgroundVideo(duration, footage_type):
     # Get video
-    relative_video_path = f'backgroundfootage/{footage_type}.mp4'
+    relative_video_path = f'backgroundfootage/{footage_type}{random.randint(1, 5)}.mp4'
     video_path = os.path.join(script_dir, relative_video_path)
 
     # Get duration of video
@@ -131,11 +131,8 @@ def generateBackgroundVideo(duration, footage_type):
     seconds = round(frames / fps)
 
     # Clip random section of video
-    if footage_type == "subway surfers":
-        start = random.randint(30, seconds - 360)
-    else:
-        start = random.randint(30, seconds - 180)
-    end = start + duration + 3
+    start = random.randint(1, seconds - round(duration) - 2)
+    end = start + duration + 2
 
     clippedVideo = VideoFileClip(video_path).subclip(start, end)
 

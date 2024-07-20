@@ -60,7 +60,6 @@ def generate_link():
 
     try:
         subreddit = random.randint(1, 2)
-        print(subreddit)
         if subreddit == 1:
             data = fetch_aita_post(username)
             return { 'url': data['url'] }
@@ -80,7 +79,6 @@ def generate_video():
     subtitle_color = data.get('subtitle_color')
     username = data.get('username')
     result = fetch_from_link(link)
-    print(result)
 
     if not os.path.exists(os.path.join(script_dir, f'temporary{username}')):
         os.makedirs(os.path.join(script_dir, f'temporary{username}'))
@@ -89,10 +87,8 @@ def generate_video():
         if result:
             if 'top_comment' in result:
                 posttext = result['content'] + ', ' + result['top_comment']['content']
-                print("askreddit")
             else:
                 posttext = result['content']
-                print("aita")
         else:
             return "Link not sufficient", 500
 
