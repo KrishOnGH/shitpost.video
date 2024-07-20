@@ -1,22 +1,20 @@
 from dotenv import load_dotenv
 load_dotenv()
 import praw
-import json
 import os
+import json
 reddit = praw.Reddit(
     client_id=os.getenv('client_id'),
     client_secret=os.getenv('client_secret'),
     user_agent=os.getenv('user_agent'),
-    username=os.getenv('username'),
+    username=os.getenv('redditusername'),
     password=os.getenv('password')
 )
-
-print(reddit.user.me())
 
 def fetch_from_link(link):
     try:
         # Fetch the submission from the link
-        submission = reddit.comment(url=link)
+        submission = reddit.submission(url=link)
 
         # Basic post info
         post_info = {
@@ -24,7 +22,7 @@ def fetch_from_link(link):
             'title': submission.title,
             'author': submission.author.name if submission.author else '[deleted]'
         }
-
+        
         # Check the subreddit
         if submission.subreddit.display_name.lower() == "amitheasshole":
             return post_info

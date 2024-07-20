@@ -60,15 +60,17 @@ def generate_link():
 
     try:
         subreddit = random.randint(1, 2)
+        print(subreddit)
         if subreddit == 1:
             data = fetch_aita_post(username)
-            return data.url
+            return { 'url': data['url'] }
         elif subreddit == 2:
             data = fetch_askreddit_post(username)
-            return data.url
+            return { 'url': data['url'] }
     
     except Exception as e:
         print(f"An error occurred: {e}")
+        return None, 500
 
 @app.route('/generate-video', methods=['POST'])
 def generate_video():
@@ -85,7 +87,7 @@ def generate_video():
 
     try:
         if result:
-            if result["top_comment"]["content"]:
+            if 'top_comment' in result:
                 posttext = result['content'] + ', ' + result['top_comment']['content']
                 print("askreddit")
             else:
