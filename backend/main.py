@@ -9,7 +9,6 @@ import subprocess
 import random
 import shutil
 import time
-import math
 import os
 
 app = Flask(__name__)
@@ -90,14 +89,17 @@ def generate_video():
                 posttext = result['content'] + ', ' + result['top_comment']['content']
             else:
                 posttext = result['title'] + ', ' + result['content']
-            length = len(posttext)
-            partcount = math.floor(length/250)
-            partslengths = [250 for i in range(partcount-1)] + [length%250]
-            parts = []
-            start = 0
-            for length in partslengths:
-                parts.append(posttext[start:start+length])
-                start += length
+            cut = 550
+            parts, start = [], 0
+            while start < len(posttext):
+                end = start + cut
+                end = max(posttext.rfind('.', start, end), posttext.rfind('!', start, end), posttext.rfind('?', start, end))
+                if end == -1 or end <= start:
+                    end = min(start + cut, len(posttext))
+                parts.append(posttext[start:end+1].strip())
+                start = end + 1
+            print(len(parts))
+            print(parts)
                 
         else:
             return "Link not sufficient", 500
