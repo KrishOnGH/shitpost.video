@@ -6,9 +6,11 @@ from flask_socketio import SocketIO
 from unidecode import unidecode
 from flask_cors import CORS
 import subprocess
+import zipfile
 import random
 import shutil
 import time
+import io
 import os
 
 app = Flask(__name__)
@@ -96,45 +98,25 @@ def generate_video():
                 end = max(posttext.rfind('.', start, end), posttext.rfind('!', start, end), posttext.rfind('?', start, end))
                 if end == -1 or end <= start:
                     end = min(start + cut, len(posttext))
-                parts.append(posttext[start:end+1].strip())
+                part = posttext[start:end+1].strip()
+                if part:
+                    parts.append(part)
                 start = end + 1
-            print(len(parts))
-            print(parts)
                 
         else:
             return "Link not sufficient", 500
 
-        for i, posttext in enumerate(parts):
-            # Generate audio and subtitles in SRT format
-            start = time.time()
-            audio_filename, audio_duration, subtitle_file = generateAudio(posttext, username)
-            print(f"{username} has completed step 1 in {str(time.time()-start)}s")
-            emit_progress(username, 2)
+        video_files = [os.path.join(script_dir, f'video{username}{i+1}.mp4') for i in range(len(parts))]
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
+            for video_file in video_files:
+                if os.path.exists(video_file):
+                    zip_file.write(video_file, os.path.basename(video_file))
+                else:
+                    return f"File {video_file} not found", 404
 
-            # Generate background video
-            start = time.time()
-            background_video = generateBackgroundVideo(audio_duration, footage_type)
-            print(f"{username} has completed step 2 in {str(time.time()-start)}s")
-            emit_progress(username, 3)
-
-            # Add subtitles to background video
-            start = time.time()
-            subtitled_video = addSubtitles(background_video, subtitle_file, subtitle_color)
-            print(f"{username} has completed step 3 in {str(time.time()-start)}s")
-            emit_progress(username, 4)
-
-            # Write final video
-            start = time.time()
-            final_video = subtitled_video
-            final_video_path = os.path.join(script_dir, f'temporary{username}', f'converting{i+1}.mp4')
-            final_video.write_videofile(final_video_path, codec='libx264', audio_codec='aac', temp_audiofile='temp-audio.m4a', remove_temp=True, logger=None)
-
-            # Save the combined video with audio
-            save(final_video_path, audio_filename, username, i+1)
-            print(f"{username} has completed step 4 in {str(time.time()-start)}s")
-            emit_progress(username, 5)
-
-        return send_file(os.path.join(script_dir, f'video{username}{1}.mp4'), as_attachment=True, download_name='video.mp4')
+        zip_buffer.seek(0)
+        return send_file(zip_buffer, as_attachment=True, download_name='videos.zip', mimetype='application/zip')
         
     except Exception as e:
         print(f"An error occurred: {e}")
