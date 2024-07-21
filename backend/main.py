@@ -89,7 +89,7 @@ def generate_video():
                 posttext = result['content'] + ', ' + result['top_comment']['content']
             else:
                 posttext = result['title'] + ', ' + result['content']
-            cut = 550
+            cut = 920
             parts, start = [], 0
             while start < len(posttext):
                 end = start + cut

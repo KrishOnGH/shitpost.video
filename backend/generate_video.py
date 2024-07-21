@@ -2,11 +2,11 @@ from moviepy.editor import VideoFileClip, CompositeVideoClip, TextClip
 from moviepy.video.tools.subtitles import SubtitlesClip
 from moviepy.config import change_settings
 from faster_whisper import WhisperModel
-from mutagen.mp3 import MP3
-from gtts import gTTS
 import pandas as pd
+import pyttsx3
 import random
 import time
+import wave
 import cv2
 import csv
 import os
@@ -90,29 +90,40 @@ def generateSRT(input_audio, username):
     output_folder = f"temporary{username}/subtitles"
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
-        
+    
     # Step 1: Transcribe Audio
     language, segments = transcribe(audio=input_audio)
-
+    
     # Step 2: Write to CSV
     csv_file = writetocsv(segments, output_folder)
-
+    
     # Step 3: Generate SRT from CSV
     generatesrt(csv_file, output_folder)
-
+    
     return f"{output_folder}/output.srt"
 
 # Audio generation function
 def generateAudio(posttext, username):
     # Generate and temporarily save audio
-    audio = gTTS(text=posttext, lang="en", slow=False, tld="com.au")
-    temp_audio_filename = os.path.join(os.path.join(script_dir, f'temporary{username}'), "temp_audio.mp3")
-    audio.save(temp_audio_filename)
+    temp_audio_filename = f"temporary{username}/temp_audio.mp3"
+    engine = pyttsx3.init()
+    rate = engine.getProperty('rate')
+    engine.setProperty('rate', int(rate)*.9)
+    rate = engine.getProperty('rate')
+    engine.setProperty('volume', int(engine.getProperty('volume'))*0.75)
+
+    voices = engine.getProperty('voices')
+    engine.setProperty('voice', voices[0].id)
+
+    engine.save_to_file(posttext, temp_audio_filename)
+    engine.runAndWait()
 
     # Get audio duration
-    audio = MP3(temp_audio_filename)
-    audio_duration = audio.info.length
-
+    with wave.open(temp_audio_filename, 'rb') as wf:
+        frames = wf.getnframes()
+        rate = wf.getframerate()
+        audio_duration = frames / float(rate)
+    
     # Generate subtitle data
     subtitle_file = generateSRT(temp_audio_filename, username)
 
