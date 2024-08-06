@@ -52,8 +52,8 @@ def save(video, audio, username, i):
     except subprocess.CalledProcessError as e:
         print(f"Error occurred: {e}")
 
-def emit_progress(username, step):
-    socketio.emit('progress', {'username': username, 'step': step})
+def emit_progress(username, parts, step):
+    socketio.emit('progress', {'username': username, 'parts': parts, 'step': step})
 
 @app.route('/generate-link', methods=['POST'])
 def generate_link():
@@ -107,24 +107,24 @@ def generate_video():
             return "Link not sufficient", 500
 
         for i, posttext in enumerate(parts):        
-            emit_progress(username, 1)
+            emit_progress(username, f'Part {i+1}/{len(parts)}', 1)
             # Generate audio and subtitles in SRT format
             start = time.time()
             audio_filename, audio_duration, subtitle_file = generateAudio(posttext, username)
             print(f"{username} has completed step 1 in {str(time.time()-start)}s")
-            emit_progress(username, 2)
+            emit_progress(username, f'Part {i+1}/{len(parts)}', 2)
 
             # Generate background video
             start = time.time()
             background_video = generateBackgroundVideo(audio_duration, footage_type)
             print(f"{username} has completed step 2 in {str(time.time()-start)}s")
-            emit_progress(username, 3)
+            emit_progress(username, f'Part {i+1}/{len(parts)}', 3)
 
             # Add subtitles to background video
             start = time.time()
             subtitled_video = addSubtitles(background_video, subtitle_file, subtitle_color)
             print(f"{username} has completed step 3 in {str(time.time()-start)}s")
-            emit_progress(username, 4)
+            emit_progress(username, f'Part {i+1}/{len(parts)}', 4)
 
             # Write final video
             start = time.time()
@@ -135,9 +135,9 @@ def generate_video():
             # Save the combined video with audio
             save(final_video_path, audio_filename, username, i+1)
             print(f"{username} has completed step 4 in {str(time.time()-start)}s")
-            emit_progress(username, 5)
+            emit_progress(username, f'Part {i+1}/{len(parts)}', 5)
 
-        video_files = [os.path.join(script_dir, f'video{username}{i+1}.mp4') for i in range(len([1, 2]))]
+        video_files = [os.path.join(script_dir, f'video{username}{i+1}.mp4') for i in range(parts)]
 
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, 'w') as zip_file:

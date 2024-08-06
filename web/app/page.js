@@ -20,8 +20,9 @@ function App() {
 
   const [link, setLink] = useState('');
   const [videoUrls, setVideoUrls] = useState([])
-  const [videoUrl, setVideoUrl] = useState(31);
+  const [videoUrl, setVideoUrl] = useState(1);
   const [progress, setProgress] = useState(0);
+  const [part, setPart] = useState('')
   const [selectedFootage, setSelectedFootage] = useState('Minecraft');
   const [subtitleColor, setSubtitleColor] = useState('white');
   const steps = ["Audio Generated", "Video Generated", "Subtitles Added", "Compiled"];
@@ -31,6 +32,7 @@ function App() {
     socket.on('progress', (data) => {
       if (data.username === username) {
         setProgress(data.step);
+        setPart(data.parts)
       }
     });
 
@@ -81,6 +83,7 @@ function App() {
         setVideoUrls(videoUrls);
         setVideoUrl(1)
         setProgress(5);
+        setPart('');
       } else {
         window.alert("Link must be of AITA or AskReddit subreddit post.");
       }
@@ -105,6 +108,18 @@ function App() {
     setLink('');
     setVideoUrl(1);
     setVideoUrls([]);
+  };
+
+  const handleNextPart = () => {
+    if (videoUrls.length > videoUrl) {
+      setVideoUrl(videoUrl+1)
+    }
+  };
+
+  const handleLastPart = () => {
+    if (videoUrl > 1) {
+      setVideoUrl(videoUrl-1)
+    }
   };
 
   const generatelink = async (e) => {
@@ -139,7 +154,11 @@ function App() {
 
   return (
     <div className='bg-[#202020] w-[100vw] flex flex-col justify-start min-h-screen'>
-      <div className="flex w-full pt-4 mt-10 pb-2 items-start justify-between bg-[#202020]">
+      <div className={`mt-10 w-full flex justify-center text-xl`}>
+        {part}
+      </div>
+
+      <div className="flex w-full pt-4 mt-3 pb-2 items-start justify-between bg-[#202020]">
         {steps?.map((step, i) => (
           <div
             key={i}
@@ -369,12 +388,18 @@ function App() {
         {progress === 5 && (
           <div className='w-full flex flex-col items-center h-full'>
             <h2 className='text-3xl mb-7'>Video compiled!</h2>
-            {videoUrls[1] && (
+            {videoUrls[videoUrl-1] && (
               <div className='w-full flex justify-center h-full items-center'>
-                <video controls src={videoUrls[1]} className='max-w-full max-h-[70vh] rounded-2xl' />
-                <div className='flex'>
-                  <button onClick={handleDownload} className='ml-10 mb-3 px-5 py-3 bg-blue-700 rounded-2xl cursor-pointer'>Download</button>
-                  <button onClick={handleRetry} className='ml-5 mb-3 px-5 py-3 bg-red-700 rounded-2xl cursor-pointer'>Retry</button>
+                <video controls src={videoUrls[videoUrl-1]} className='max-w-full max-h-[70vh] rounded-2xl' />
+                <div className='flex flex-col items-center'>
+                  <div className='flex'>
+                    <button onClick={handleDownload} className='ml-10 mb-3 px-5 py-3 bg-blue-700 rounded-2xl cursor-pointer'>Download</button>
+                    <button onClick={handleRetry} className='ml-5 mb-3 px-5 py-3 bg-red-700 rounded-2xl cursor-pointer'>Retry</button>
+                  </div>
+                  <div className='flex'>
+                    <button onClick={handleLastPart} className='ml-10 mb-3 px-5 py-3 bg-gray-700 rounded-2xl cursor-pointer'>Last</button>
+                    <button onClick={handleNextPart} className='ml-5 mb-3 px-5 py-3 bg-gray-700 rounded-2xl cursor-pointer'>Next</button>
+                  </div>
                 </div>
               </div>
             )}
