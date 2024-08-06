@@ -1,7 +1,7 @@
 
 from generate_video import generateAudio, generateBackgroundVideo, addSubtitles
 from fetch import fetch_aita_post, fetch_askreddit_post, fetch_from_link
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, jsonify
 from flask_socketio import SocketIO
 from unidecode import unidecode
 from flask_cors import CORS
@@ -91,7 +91,7 @@ def generate_video():
                 posttext = result['content'] + ', ' + result['top_comment']['content']
             else:
                 posttext = result['title'] + ', ' + result['content']
-            cut = 920
+            cut = 1030
             parts, start = [], 0
             while start < len(posttext):
                 end = start + cut
@@ -106,14 +106,46 @@ def generate_video():
         else:
             return "Link not sufficient", 500
 
-        video_files = [os.path.join(script_dir, f'video{username}{i+1}.mp4') for i in range(len(parts))]
+        for i, posttext in enumerate(parts):        
+            emit_progress(username, 1)
+            # Generate audio and subtitles in SRT format
+            start = time.time()
+            audio_filename, audio_duration, subtitle_file = generateAudio(posttext, username)
+            print(f"{username} has completed step 1 in {str(time.time()-start)}s")
+            emit_progress(username, 2)
+
+            # Generate background video
+            start = time.time()
+            background_video = generateBackgroundVideo(audio_duration, footage_type)
+            print(f"{username} has completed step 2 in {str(time.time()-start)}s")
+            emit_progress(username, 3)
+
+            # Add subtitles to background video
+            start = time.time()
+            subtitled_video = addSubtitles(background_video, subtitle_file, subtitle_color)
+            print(f"{username} has completed step 3 in {str(time.time()-start)}s")
+            emit_progress(username, 4)
+
+            # Write final video
+            start = time.time()
+            final_video = subtitled_video
+            final_video_path = os.path.join(script_dir, f'temporary{username}', f'converting{i+1}.mp4')
+            final_video.write_videofile(final_video_path, codec='libx264', audio_codec='aac', temp_audiofile='temp-audio.m4a', remove_temp=True, logger=None)
+
+            # Save the combined video with audio
+            save(final_video_path, audio_filename, username, i+1)
+            print(f"{username} has completed step 4 in {str(time.time()-start)}s")
+            emit_progress(username, 5)
+
+        video_files = [os.path.join(script_dir, f'video{username}{i+1}.mp4') for i in range(len([1, 2]))]
+
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
-            for video_file in video_files:
+            for i, video_file in enumerate(video_files):
                 if os.path.exists(video_file):
-                    zip_file.write(video_file, os.path.basename(video_file))
+                    zip_file.write(video_file, f'video{i+1}.mp4')
                 else:
-                    return f"File {video_file} not found", 404
+                    return jsonify({"error": f"File {video_file} not found"}), 404
 
         zip_buffer.seek(0)
         return send_file(zip_buffer, as_attachment=True, download_name='videos.zip', mimetype='application/zip')

@@ -19,7 +19,8 @@ function App() {
   }, []);
 
   const [link, setLink] = useState('');
-  const [videoUrl, setVideoUrl] = useState('');
+  const [videoUrls, setVideoUrls] = useState([])
+  const [videoUrl, setVideoUrl] = useState(31);
   const [progress, setProgress] = useState(0);
   const [selectedFootage, setSelectedFootage] = useState('Minecraft');
   const [subtitleColor, setSubtitleColor] = useState('white');
@@ -50,16 +51,38 @@ function App() {
           },
           body: JSON.stringify({ "link": link, "footage_type": selectedFootage, "subtitle_color": subtitleColor, "username": username}),
         });
-
+  
         if (!response.ok) {
           throw new Error('Network response was not ok');
         }
+        
         const blob = await response.blob();
-        const url = URL.createObjectURL(new Blob([blob], { type: 'video/mp4' }));
-        setVideoUrl(url);
+        const zipUrl = URL.createObjectURL(blob);
+        
+        // Use JSZip to process the zip file
+        const JSZip = require('jszip');
+        const zip = await JSZip.loadAsync(blob);
+      
+        const videoUrls = [];
+      
+        let i = 1;
+        while (true) {
+          const fileName = `video${i}.mp4`;
+          if (zip.file(fileName)) {
+            const fileBlob = await zip.file(fileName).async('blob');
+            const fileUrl = URL.createObjectURL(fileBlob);
+            videoUrls.push(fileUrl);
+            i++;
+          } else {
+            break;
+          }
+        }
+        
+        setVideoUrls(videoUrls);
+        setVideoUrl(1)
         setProgress(5);
       } else {
-        window.alert("Link must be of AITA or AskReddit subreddit post.")
+        window.alert("Link must be of AITA or AskReddit subreddit post.");
       }
     } catch (error) {
       console.error('Error generating video:', error);
@@ -67,9 +90,9 @@ function App() {
   }
 
   const handleDownload = () => {
-    if (videoUrl) {
+    if (videoUrls[videoUrl-1]) {
       const link = document.createElement('a');
-      link.href = videoUrl;
+      link.href = videoUrls[videoUrl-1];
       link.download = 'video.mp4';
       document.body.appendChild(link);
       link.click();
@@ -80,7 +103,8 @@ function App() {
   const handleRetry = () => {
     setProgress(0);
     setLink('');
-    setVideoUrl('');
+    setVideoUrl(1);
+    setVideoUrls([]);
   };
 
   const generatelink = async (e) => {
@@ -345,9 +369,9 @@ function App() {
         {progress === 5 && (
           <div className='w-full flex flex-col items-center h-full'>
             <h2 className='text-3xl mb-7'>Video compiled!</h2>
-            {videoUrl && (
+            {videoUrls[1] && (
               <div className='w-full flex justify-center h-full items-center'>
-                <video controls src={videoUrl} className='max-w-full max-h-[70vh] rounded-2xl' />
+                <video controls src={videoUrls[1]} className='max-w-full max-h-[70vh] rounded-2xl' />
                 <div className='flex'>
                   <button onClick={handleDownload} className='ml-10 mb-3 px-5 py-3 bg-blue-700 rounded-2xl cursor-pointer'>Download</button>
                   <button onClick={handleRetry} className='ml-5 mb-3 px-5 py-3 bg-red-700 rounded-2xl cursor-pointer'>Retry</button>
