@@ -1,6 +1,20 @@
+# Import common resources
+import sys
+import os
 
-from generate_video import generateAudio, generateBackgroundVideo, addSubtitles
-from fetch import fetch_aita_post, fetch_askreddit_post, fetch_from_link
+# Handle the directory name with a space
+common_resources_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../common resources'))
+
+# Temporarily add the directory to sys.path
+sys.path.insert(0, common_resources_path)
+
+try:
+    from generate_video import generateAudio, generateBackgroundVideo, addSubtitles
+    from fetch import fetch_aita_post, fetch_askreddit_post, fetch_from_link
+
+finally:
+    sys.path.pop(0)
+
 from flask import Flask, request, send_file, jsonify
 from flask_socketio import SocketIO
 from unidecode import unidecode
