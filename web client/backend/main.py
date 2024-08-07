@@ -25,7 +25,6 @@ import random
 import shutil
 import time
 import io
-import os
 
 app = Flask(__name__)
 CORS(app)
@@ -96,8 +95,9 @@ def generate_video():
     username = data.get('username')
     result = fetch_from_link(link)
 
-    if not os.path.exists(os.path.join(script_dir, f'temporary{username}')):
-        os.makedirs(os.path.join(script_dir, f'temporary{username}'))
+    temp_dir = os.path.join(script_dir, f'temporary{username}')
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
 
     try:
         if result:
@@ -124,7 +124,7 @@ def generate_video():
             emit_progress(username, f'Part {i+1}/{len(parts)}', 1)
             # Generate audio and subtitles in SRT format
             start = time.time()
-            audio_filename, audio_duration, subtitle_file = generateAudio(posttext, username)
+            audio_filename, audio_duration, subtitle_file = generateAudio(posttext, username, temp_dir)
             print(f"{username} has completed step 1 in {str(time.time()-start)}s")
             emit_progress(username, f'Part {i+1}/{len(parts)}', 2)
 

@@ -1,0 +1,7 @@
+{
+    "subtitleColor": "white",
+    "backgroundFootagePercentages": {"GTA": 50, "Minecraft": 0, "Satisfying": 50, "Subway Surfers": 0},
+    "subredditPercentages": {"AITA": 100, "AskReddit": 0},
+    "postsPerDay (max 10)": 3, 
+    "maxReserveVideos (100 reccomended for storage reasons)": 100
+}

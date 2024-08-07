@@ -3,10 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+    "build_web": "next build && next start -p 4000",
+    "build_backend": "python backend/main.py"
   },
   "dependencies": {
     "jszip": "^3.10.1",

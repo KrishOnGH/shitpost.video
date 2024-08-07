@@ -103,9 +103,9 @@ def generateSRT(input_audio, username):
     return f"{output_folder}/output.srt"
 
 # Audio generation function
-def generateAudio(posttext, username):
+def generateAudio(posttext, username, temp_dir):
     # Generate and temporarily save audio
-    temp_audio_filename = f"temporary{username}/temp_audio.mp3"
+    temp_audio_filename = os.path.join(temp_dir, "temp_audio.mp3")
     engine = pyttsx3.init()
     rate = engine.getProperty('rate')
     engine.setProperty('rate', int(rate)*.9)
