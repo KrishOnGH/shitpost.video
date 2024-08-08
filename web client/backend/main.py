@@ -9,7 +9,7 @@ common_resources_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 
 sys.path.insert(0, common_resources_path)
 
 try:
-    from generate_video import generateAudio, generateBackgroundVideo, addSubtitles
+    from generate_video import createTempFolder, generateAudio, generateBackgroundVideo, addSubtitles
     from fetch import fetch_aita_post, fetch_askreddit_post, fetch_from_link
 
 finally:
@@ -38,7 +38,7 @@ script_start_time = time.time()
 
 # Save video function
 def save(video, audio, username, i):
-    output_video = f"video{username}{i}.mp4"
+    output_video = os.path.join(script_dir, f'video{username}{i}.mp4')
 
     ffmpeg_command = [
         "ffmpeg",
@@ -95,9 +95,7 @@ def generate_video():
     username = data.get('username')
     result = fetch_from_link(link)
 
-    temp_dir = os.path.join(script_dir, f'temporary{username}')
-    if not os.path.exists(temp_dir):
-        os.makedirs(temp_dir)
+    temp_dir = createTempFolder(username)
 
     try:
         if result:
@@ -118,13 +116,13 @@ def generate_video():
                 start = end + 1
                 
         else:
-            return "Link not sufficient", 500
+            return jsonify({"error": "Link not sufficient"}), 500
 
         for i, posttext in enumerate(parts):        
             emit_progress(username, f'Part {i+1}/{len(parts)}', 1)
             # Generate audio and subtitles in SRT format
             start = time.time()
-            audio_filename, audio_duration, subtitle_file = generateAudio(posttext, username, temp_dir)
+            audio_filename, audio_duration, subtitle_file = generateAudio(posttext, temp_dir)
             print(f"{username} has completed step 1 in {str(time.time()-start)}s")
             emit_progress(username, f'Part {i+1}/{len(parts)}', 2)
 
@@ -142,16 +140,16 @@ def generate_video():
 
             # Write final video
             start = time.time()
+            final_video_path = os.path.join(temp_dir, f'converting{i+1}.mp4')
             final_video = subtitled_video
-            final_video_path = os.path.join(script_dir, f'temporary{username}', f'converting{i+1}.mp4')
-            final_video.write_videofile(final_video_path, codec='libx264', audio_codec='aac', temp_audiofile='temp-audio.m4a', remove_temp=True, logger=None)
+            final_video.write_videofile(final_video_path, codec='libx264', audio_codec='aac', temp_audiofile=os.path.join(temp_dir, 'temp-audio.m4a'), remove_temp=True, logger=None)
 
             # Save the combined video with audio
             save(final_video_path, audio_filename, username, i+1)
             print(f"{username} has completed step 4 in {str(time.time()-start)}s")
             emit_progress(username, f'Part {i+1}/{len(parts)}', 5)
 
-        video_files = [os.path.join(script_dir, f'video{username}{i+1}.mp4') for i in range(parts)]
+        video_files = [os.path.join(script_dir, f'video{username}{i+1}.mp4') for i in range(len(parts))]
 
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, 'w') as zip_file:
@@ -166,9 +164,10 @@ def generate_video():
         
     except Exception as e:
         print(f"An error occurred: {e}")
+        return jsonify({"error": "An internal error occurred"}), 500
 
     finally:
-        shutil.rmtree(f'temporary{username}', ignore_errors=True)
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -17,8 +17,16 @@ change_settings({"IMAGEMAGICK_BINARY": IMAGEMAGICK_PATH})
 # Get post, background footage choice, and directory location for temporary storage
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
+# Create temporary folder
+def createTempFolder(username):
+    temp_dir = os.path.join(script_dir, 'temporary', username)
+    if not os.path.exists(temp_dir):
+        os.makedirs(temp_dir)
+
+    return temp_dir
+
 # Generate SRT file
-def generateSRT(input_audio, username):
+def generateSRT(temp_dir):
     def transcribe(audio):
         model = WhisperModel("base")
         segments, info = model.transcribe(audio, vad_filter=False, vad_parameters=dict(min_silence_duration_ms=100))
@@ -87,9 +95,10 @@ def generateSRT(input_audio, username):
                 srt_file.write(row)
         return srt_output
 
-    output_folder = f"temporary{username}/subtitles"
+    output_folder = os.path.join(temp_dir, "subtitles")
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
+    input_audio = f"{temp_dir}/temp_audio.mp3"
     
     # Step 1: Transcribe Audio
     language, segments = transcribe(audio=input_audio)
@@ -103,9 +112,9 @@ def generateSRT(input_audio, username):
     return f"{output_folder}/output.srt"
 
 # Audio generation function
-def generateAudio(posttext, username, temp_dir):
-    # Generate and temporarily save audio
-    temp_audio_filename = os.path.join(temp_dir, "temp_audio.mp3")
+def generateAudio(posttext, temp_dir):
+    # Generate audio
+    temp_audio_filename = f"{temp_dir}/temp_audio.mp3"
     engine = pyttsx3.init()
     rate = engine.getProperty('rate')
     engine.setProperty('rate', int(rate)*.9)
@@ -125,7 +134,7 @@ def generateAudio(posttext, username, temp_dir):
         audio_duration = frames / float(rate)
     
     # Generate subtitle data
-    subtitle_file = generateSRT(temp_audio_filename, username)
+    subtitle_file = generateSRT(temp_dir)
 
     return temp_audio_filename, audio_duration, subtitle_file
 

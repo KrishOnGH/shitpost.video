@@ -11,6 +11,8 @@ reddit = praw.Reddit(
     password=os.getenv('password')
 )
 
+script_dir = os.path.dirname(os.path.abspath(__file__))
+
 def fetch_from_link(link):
     try:
         # Fetch the submission from the link
@@ -67,8 +69,8 @@ def fetch_aita_post(username):
     ]
 
     # Load or create the used_posts.json file
-    if os.path.exists('used_posts.json'):
-        with open('used_posts.json', 'r') as f:
+    if os.path.exists(os.path.join(script_dir, 'used_posts.json')):
+        with open(os.path.join(script_dir, 'used_posts.json'), 'r') as f:
             used_posts = json.load(f)
     else:
         used_posts = {}
@@ -83,7 +85,7 @@ def fetch_aita_post(username):
         used_posts[username] = [filtered_posts[0].id] if filtered_posts else []
 
     # Write back to used_posts.json
-    with open('used_posts.json', 'w') as f:
+    with open(os.path.join(script_dir, 'used_posts.json'), 'w') as f:
         json.dump(used_posts, f)
 
     # Return the first post's details if available
@@ -116,8 +118,8 @@ def fetch_askreddit_post(username):
     ]
 
     # Load or create the used_posts.json file
-    if os.path.exists('used_posts.json'):
-        with open('used_posts.json', 'r') as f:
+    if os.path.exists(os.path.join(script_dir, 'used_posts.json')):
+        with open(os.path.join(script_dir, 'used_posts.json'), 'r') as f:
             used_posts = json.load(f)
     else:
         used_posts = {}
@@ -133,7 +135,7 @@ def fetch_askreddit_post(username):
         used_posts[username] = [filtered_posts[0].id] if filtered_posts else []
 
     # Write back to used_posts.json
-    with open('used_posts.json', 'w') as f:
+    with open(os.path.join(script_dir, 'used_posts.json'), 'w') as f:
         json.dump(used_posts, f)
 
     # Return the first post's details if available
