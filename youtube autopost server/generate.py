@@ -127,20 +127,21 @@ def generateVideo(username, video_number, footage_type, subtitle_color, link):
     finally:
         shutil.rmtree(f'temporary{username}', ignore_errors=True)
 
-while True:
-    video_reserve_path = os.path.join(script_dir, 'video reserve')
-    reservedVideos = len([f for f in os.listdir(video_reserve_path) if f.lower().endswith('.mp4')])
+def generate():
+    while True:
+        video_reserve_path = os.path.join(script_dir, 'video reserve')
+        reservedVideos = len([f for f in os.listdir(video_reserve_path) if f.lower().endswith('.mp4')])
 
-    if reservedVideos < preferences['maxReserveVideos (100 reccomended for storage reasons)']:
-        subreddit = random.choices(list(preferences['subredditPercentages'].keys()), 
-                                weights=list(preferences['subredditPercentages'].values()), 
-                                k=1)[0]
-        backgroundFootage = random.choices(list(preferences['backgroundFootagePercentages'].keys()), 
-                                    weights=list(preferences['backgroundFootagePercentages'].values()), 
+        if reservedVideos < preferences['maxReserveVideos (100 reccomended for storage reasons)']:
+            subreddit = random.choices(list(preferences['subredditPercentages'].keys()), 
+                                    weights=list(preferences['subredditPercentages'].values()), 
                                     k=1)[0]
+            backgroundFootage = random.choices(list(preferences['backgroundFootagePercentages'].keys()), 
+                                        weights=list(preferences['backgroundFootagePercentages'].values()), 
+                                        k=1)[0]
 
-        subtitleColor = preferences['subtitleColor']
-        link = generate_link("Auto Post Server", subreddit)
-        generateVideo("Auto Post Server", reservedVideos+1, backgroundFootage, subtitleColor, link)
+            subtitleColor = preferences['subtitleColor']
+            link = generate_link("Auto Post Server", subreddit)
+            generateVideo("Auto Post Server", reservedVideos+1, backgroundFootage, subtitleColor, link)
 
-    time.sleep(5)
+        time.sleep(5)
