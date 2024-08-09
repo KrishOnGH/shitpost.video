@@ -9,7 +9,7 @@ common_resources_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 
 sys.path.insert(0, common_resources_path)
 
 try:
-    from generate_video import generateAudio, generateBackgroundVideo, addSubtitles
+    from generate_video import createTempFolder, generateAudio, generateBackgroundVideo, addSubtitles
     from fetch import fetch_aita_post, fetch_askreddit_post, fetch_from_link
 
 finally:
@@ -53,28 +53,26 @@ def save(video, audio, video_number, i):
 
     try:
         subprocess.run(ffmpeg_command, check=True)
+
     except subprocess.CalledProcessError as e:
         print(f"Error occurred: {e}")
 
-def generate_link(username):
+def generate_link(username, subreddit):
     try:
-        subreddit = random.randint(1, 2)
-        if subreddit == 1:
+        if subreddit == 'AITA':
             data = fetch_aita_post(username)
             return { 'url': data['url'] }
-        elif subreddit == 2:
+        elif subreddit == 'AskReddit':
             data = fetch_askreddit_post(username)
             return { 'url': data['url'] }
 
     except Exception as e:
-        print(f"An error occurred: {e}")
-        return None, 500
+        print(f"An error occurred:: {e}")
+        return None
 
 def generateVideo(username, video_number, footage_type, subtitle_color, link):
-    result = fetch_from_link(link)
-    temp_dir = os.path.join(script_dir, f'temporary{username}')
-    if not os.path.exists(temp_dir):
-        os.makedirs(temp_dir)
+    result = fetch_from_link(link['url'])
+    temp_dir = createTempFolder(username)
 
     try:
         if result:
@@ -100,7 +98,7 @@ def generateVideo(username, video_number, footage_type, subtitle_color, link):
         for i, posttext in enumerate(parts):
             # Generate audio and subtitles in SRT format
             start = time.time()
-            audio_filename, audio_duration, subtitle_file = generateAudio(posttext, username, temp_dir)
+            audio_filename, audio_duration, subtitle_file = generateAudio(posttext, temp_dir)
             print(f"{username} has completed step 1 in {str(time.time()-start)}s")
 
             # Generate background video
@@ -116,11 +114,11 @@ def generateVideo(username, video_number, footage_type, subtitle_color, link):
             # Write final video
             start = time.time()
             final_video = subtitled_video
-            final_video_path = os.path.join(script_dir, f'temporary{username}', f'converting{i+1}.mp4')
-            final_video.write_videofile(final_video_path, codec='libx264', audio_codec='aac', temp_audiofile='temp-audio.m4a', remove_temp=True, logger=None)
+            final_video_path = os.path.join(temp_dir, f'converting{video_number+i}.mp4')
+            final_video.write_videofile(final_video_path, codec='libx264', audio_codec='aac', temp_audiofile=os.path.join(temp_dir, 'temp-audio.m4a'), remove_temp=True, logger=None)
 
             # Save the combined video with audio
-            save(final_video_path, audio_filename, video_number, i+1)
+            save(final_video_path, audio_filename, video_number, i)
             print(f"{username} has completed step 4 in {str(time.time()-start)}s")
         
     except Exception as e:
@@ -130,18 +128,19 @@ def generateVideo(username, video_number, footage_type, subtitle_color, link):
         shutil.rmtree(f'temporary{username}', ignore_errors=True)
 
 while True:
-    subreddit = random.choices(list(preferences['subredditPercentages'].keys()), 
-                               weights=list(preferences['subredditPercentages'].values()), 
-                               k=1)[0]
-    backgroundFootage = random.choices(list(preferences['backgroundFootagePercentages'].keys()), 
-                                       weights=list(preferences['backgroundFootagePercentages'].values()), 
-                                       k=1)[0]
-    subtitleColor = preferences['subtitleColor']
     video_reserve_path = os.path.join(script_dir, 'video reserve')
     reservedVideos = len([f for f in os.listdir(video_reserve_path) if f.lower().endswith('.mp4')])
-    link = generate_link("Auto Post Server")
 
     if reservedVideos < preferences['maxReserveVideos (100 reccomended for storage reasons)']:
+        subreddit = random.choices(list(preferences['subredditPercentages'].keys()), 
+                                weights=list(preferences['subredditPercentages'].values()), 
+                                k=1)[0]
+        backgroundFootage = random.choices(list(preferences['backgroundFootagePercentages'].keys()), 
+                                    weights=list(preferences['backgroundFootagePercentages'].values()), 
+                                    k=1)[0]
+
+        subtitleColor = preferences['subtitleColor']
+        link = generate_link("Auto Post Server", subreddit)
         generateVideo("Auto Post Server", reservedVideos+1, backgroundFootage, subtitleColor, link)
 
-    time.sleep(1)
+    time.sleep(5)
