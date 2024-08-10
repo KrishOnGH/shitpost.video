@@ -41,5 +41,3 @@ def upload(video_path, title, description):
     except googleapiclient.errors.HttpError as e:
         print(f"An HTTP error {e.resp.status} occurred:\n{e.content}")
         return None
-        print(f"An HTTP error {e.resp.status} occurred:\n{e.content}")
-        return None

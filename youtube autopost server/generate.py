@@ -125,7 +125,7 @@ def generateVideo(username, video_number, footage_type, subtitle_color, link):
         print(f"An error occurred: {e}")
 
     finally:
-        shutil.rmtree(f'temporary{username}', ignore_errors=True)
+        shutil.rmtree(temp_dir, ignore_errors=True)
 
 def generate():
     while True:
