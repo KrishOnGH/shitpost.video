@@ -121,6 +121,8 @@ def generateVideo(username, video_number, footage_type, subtitle_color, link):
             save(final_video_path, audio_filename, video_number, i)
             print(f"{username} has completed step 4 in {str(time.time()-start)}s")
         
+        return result['title']
+
     except Exception as e:
         print(f"An error occurred: {e}")
 
@@ -133,6 +135,7 @@ def generate():
         reservedVideos = len([f for f in os.listdir(video_reserve_path) if f.lower().endswith('.mp4')])
 
         if reservedVideos < preferences['maxReserveVideos (100 reccomended for storage reasons)']:
+            new_video_number = reservedVideos + 1
             subreddit = random.choices(list(preferences['subredditPercentages'].keys()), 
                                     weights=list(preferences['subredditPercentages'].values()), 
                                     k=1)[0]
@@ -142,6 +145,17 @@ def generate():
 
             subtitleColor = preferences['subtitleColor']
             link = generate_link("Auto Post Server", subreddit)
-            generateVideo("Auto Post Server", reservedVideos+1, backgroundFootage, subtitleColor, link)
+            title = generateVideo("Auto Post Server", new_video_number, backgroundFootage, subtitleColor, link)
+
+            metadata_file = os.path.join(video_reserve_path, 'metadata.json')   
+            if os.path.exists(metadata_file):
+                with open(metadata_file, 'r') as file:
+                    metadata = json.load(file)
+
+            metadata['all videos'].append(new_video_number)
+            metadata['data of videos'][f'video{new_video_number}'] = {'title': title}
+
+            with open(metadata_file, 'w') as file:
+                json.dump(metadata, file, indent=4)
 
         time.sleep(5)

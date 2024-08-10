@@ -23,7 +23,7 @@ def index():
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Video Swipe</title>
+        <title>Video Check</title>
         <style>
             body {
                 margin: 0;
@@ -186,5 +186,5 @@ def reject_video():
     # For simplicity, we'll just reload the video after rejection
     return jsonify({'status': 'rejected'})
 
-if __name__ == '__main__':
+def runCheckApp():
     app.run(debug=True)
