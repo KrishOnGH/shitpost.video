@@ -26,49 +26,84 @@ def index():
         <title>Video Swipe</title>
         <style>
             body {
+                margin: 0;
+                font-family: Arial, sans-serif;
+                height: 100vh;
+                overflow: hidden;
                 display: flex;
                 justify-content: center;
                 align-items: center;
-                height: 100vh;
-                margin: 0;
                 background-color: #f0f0f0;
-                font-family: Arial, sans-serif;
-                overflow: hidden;
+            }
+            .container {
+                display: flex;
+                position: relative;
+                width: 100%;
+                height: 100%;
+            }
+            .left, .right {
+                width: 50%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                position: absolute;
+                top: 0;
+                z-index: 1;
+                font-size: 3vw;
+                color: #fff;
+                text-align: center;
+            }
+            .left {
+                background-color: red;
+                left: 0;
+                display: none;
+                justify-content: flex-start;
+                padding-left: 2vw;
+            }
+            .right {
+                background-color: blue;
+                right: 0;
+                display: none;
+                justify-content: flex-end;
+                padding-right: 2vw;
             }
             .video-container {
+                width: 100vw;
+                height: auto;
+                text-align: center;
                 position: relative;
-                width: 80vw;
-                max-width: 600px;
+                z-index: 10;
+                display: flex;
+                justify-content: center;
+                align-items: center;
             }
             video {
-                width: 100%;
+                width: 40%;
+                min-width: 180px;
+                max-width: 600px;
                 height: auto;
                 display: block;
+                border: 5px solid black;
             }
             .message {
                 font-size: 24px;
                 color: #333;
                 text-align: center;
-            }
-            .instructions {
                 position: absolute;
                 top: 50%;
-                width: 100%;
-                display: flex;
-                justify-content: space-between;
-                font-size: 24px;
-                color: #333;
-                transform: translateY(-50%);
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 0;
             }
         </style>
     </head>
     <body>
-        <div class="video-container">
-            <video id="video" controls></video>
-            <div class="instructions">
-                <div id="reject" class="instruction">L - Reject</div>
-                <div id="approve" class="instruction">R - Approve</div>
+        <div class="container">
+            <div id="left" class="left">L - Reject</div>
+            <div class="video-container">
+                <video id="video" controls></video>
             </div>
+            <div id="right" class="right">R - Approve</div>
         </div>
         <div id="message" class="message"></div>
 
@@ -80,10 +115,13 @@ def index():
                 if (data.video) {
                     document.getElementById('video').src = data.video;
                     document.getElementById('message').textContent = '';
-                    document.getElementById('video').style.display = 'block';
+                    document.getElementById('left').style.display = 'flex';
+                    document.getElementById('right').style.display = 'flex';
                 } else {
                     document.getElementById('message').textContent = data.message;
                     document.getElementById('video').style.display = 'none';
+                    document.getElementById('left').style.display = 'none';
+                    document.getElementById('right').style.display = 'none';
                 }
             }
 
