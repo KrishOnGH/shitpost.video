@@ -1,18 +1,5 @@
 {
-    "all videos": [
-        2,
-        4
-    ],
-    "approved videos": [
-        2,
-        4
-    ],
-    "data of videos": {
-        "video2": {
-            "title": "video2"
-        },
-        "video4": {
-            "title": "video4"
-        }
-    }
+    "all videos": [],
+    "approved videos": [],
+    "data of videos": {}
 }

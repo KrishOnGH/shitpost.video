@@ -23,6 +23,8 @@ import time
 import json
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
+video_reserve_path = os.path.join(script_dir, 'video reserve')
+metadata_file = os.path.join(video_reserve_path, 'metadata.json')
 
 with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'preferences.json'), 'r') as file:
     preferences = json.load(file)
@@ -120,8 +122,17 @@ def generateVideo(username, video_number, footage_type, subtitle_color, link):
             # Save the combined video with audio
             save(final_video_path, audio_filename, video_number, i)
             print(f"{username} has completed step 4 in {str(time.time()-start)}s")
-        
-        return result['title']
+
+            metadata_file = os.path.join(video_reserve_path, 'metadata.json')   
+            if os.path.exists(metadata_file):
+                with open(metadata_file, 'r') as file:
+                    metadata = json.load(file)
+
+            metadata['all videos'].append(video_number+i)
+            metadata['data of videos'][f'video{video_number+i}'] = {'title': result['title']}
+
+            with open(metadata_file, 'w') as file:
+                json.dump(metadata, file, indent=4)
 
     except Exception as e:
         print(f"An error occurred: {e}")
@@ -131,7 +142,6 @@ def generateVideo(username, video_number, footage_type, subtitle_color, link):
 
 def generate():
     while True:
-        video_reserve_path = os.path.join(script_dir, 'video reserve')
         reservedVideos = len([f for f in os.listdir(video_reserve_path) if f.lower().endswith('.mp4')])
 
         if reservedVideos < preferences['maxReserveVideos (100 reccomended for storage reasons)']:
@@ -145,17 +155,8 @@ def generate():
 
             subtitleColor = preferences['subtitleColor']
             link = generate_link("Auto Post Server", subreddit)
-            title = generateVideo("Auto Post Server", new_video_number, backgroundFootage, subtitleColor, link)
-
-            metadata_file = os.path.join(video_reserve_path, 'metadata.json')   
-            if os.path.exists(metadata_file):
-                with open(metadata_file, 'r') as file:
-                    metadata = json.load(file)
-
-            metadata['all videos'].append(new_video_number)
-            metadata['data of videos'][f'video{new_video_number}'] = {'title': title}
-
-            with open(metadata_file, 'w') as file:
-                json.dump(metadata, file, indent=4)
+            generateVideo("Auto Post Server", new_video_number, backgroundFootage, subtitleColor, link)
 
         time.sleep(10)
+
+generate()
