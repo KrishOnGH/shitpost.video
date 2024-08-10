@@ -183,8 +183,16 @@ def approve_video():
 
 @app.route('/reject', methods=['POST'])
 def reject_video():
-    # For simplicity, we'll just reload the video after rejection
-    return jsonify({'status': 'rejected'})
-
-def runCheckApp():
-    app.run(debug=True)
+    video_id = request.json.get('video')
+    if video_id:
+        metadata = get_metadata()   
+        metadata['all videos'].remove(int(video_id))
+        del metadata['data of videos'][f'video{video_id}']
+        
+        video_path = os.path.join(VIDEO_DIR, f'video{video_id}.mp4')
+        if os.path.exists(video_path):
+            os.remove(video_path)
+        
+        save_metadata(metadata)
+        return jsonify({'status': 'rejected'})
+    return jsonify({'status': 'error'})

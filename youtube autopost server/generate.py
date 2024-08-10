@@ -158,4 +158,4 @@ def generate():
             with open(metadata_file, 'w') as file:
                 json.dump(metadata, file, indent=4)
 
-        time.sleep(5)
+        time.sleep(10)
