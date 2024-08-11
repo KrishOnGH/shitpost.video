@@ -22,7 +22,8 @@ def fetch_from_link(link):
         post_info = {
             'content': submission.selftext,
             'title': submission.title,
-            'author': submission.author.name if submission.author else '[deleted]'
+            'author': submission.author.name if submission.author else '[deleted]',
+            'id': submission.id
         }
         
         # Check the subreddit

@@ -90,6 +90,8 @@ def uploadReserveVideo():
     with open(metadata_file, 'w') as file:
         json.dump(metadata, file, indent=4)
 
+    print(f"Uploaded video ({v})")
+
 def schedule_uploads():
     now = datetime.utcnow()
     interval = 24 / posts_per_day

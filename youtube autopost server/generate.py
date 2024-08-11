@@ -30,8 +30,8 @@ with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'preferences.
     preferences = json.load(file)
 
 # Save video function
-def save(video, audio, video_number, i):
-    output_video = f"video reserve/video{video_number+i}.mp4"
+def save(video, audio, video_id, i):
+    output_video = f"video reserve/video{video_id}part{i}.mp4"
 
     ffmpeg_command = [
         "ffmpeg",
@@ -72,7 +72,7 @@ def generate_link(username, subreddit):
         print(f"An error occurred:: {e}")
         return None
 
-def generateVideo(username, video_number, footage_type, subtitle_color, link):
+def generateVideo(username, footage_type, subtitle_color, link):
     result = fetch_from_link(link['url'])
     temp_dir = createTempFolder(username)
 
@@ -95,7 +95,7 @@ def generateVideo(username, video_number, footage_type, subtitle_color, link):
                 start = end + 1
                 
         else:
-            return "Link not sufficient", 500
+            return "Link not sufficient"
 
         for i, posttext in enumerate(parts):
             # Generate audio and subtitles in SRT format
@@ -115,12 +115,13 @@ def generateVideo(username, video_number, footage_type, subtitle_color, link):
 
             # Write final video
             start = time.time()
+            video_id = result['id']
             final_video = subtitled_video
-            final_video_path = os.path.join(temp_dir, f'converting{video_number+i}.mp4')
+            final_video_path = os.path.join(temp_dir, f'converting{video_id}part{i+1}.mp4')
             final_video.write_videofile(final_video_path, codec='libx264', audio_codec='aac', temp_audiofile=os.path.join(temp_dir, 'temp-audio.m4a'), remove_temp=True, logger=None)
 
             # Save the combined video with audio
-            save(final_video_path, audio_filename, video_number, i)
+            save(final_video_path, audio_filename, video_id, i+1)
             print(f"{username} has completed step 4 in {str(time.time()-start)}s")
 
             metadata_file = os.path.join(video_reserve_path, 'metadata.json')   
@@ -128,8 +129,8 @@ def generateVideo(username, video_number, footage_type, subtitle_color, link):
                 with open(metadata_file, 'r') as file:
                     metadata = json.load(file)
 
-            metadata['all videos'].append(video_number+i)
-            metadata['data of videos'][f'video{video_number+i}'] = {'title': result['title']}
+            metadata['all videos'].append(f'{video_id}part{i+1}')
+            metadata['data of videos'][f'video{video_id}part{i+1}'] = {'title': result['title']}
 
             with open(metadata_file, 'w') as file:
                 json.dump(metadata, file, indent=4)
@@ -145,7 +146,6 @@ def generate():
         reservedVideos = len([f for f in os.listdir(video_reserve_path) if f.lower().endswith('.mp4')])
 
         if reservedVideos < preferences['maxReserveVideos (100 reccomended for storage reasons)']:
-            new_video_number = reservedVideos + 1
             subreddit = random.choices(list(preferences['subredditPercentages'].keys()), 
                                     weights=list(preferences['subredditPercentages'].values()), 
                                     k=1)[0]
@@ -155,8 +155,6 @@ def generate():
 
             subtitleColor = preferences['subtitleColor']
             link = generate_link("Auto Post Server", subreddit)
-            generateVideo("Auto Post Server", new_video_number, backgroundFootage, subtitleColor, link)
+            generateVideo("Auto Post Server", backgroundFootage, subtitleColor, link)
 
         time.sleep(10)
-
-generate()
