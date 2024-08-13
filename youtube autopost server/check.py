@@ -80,7 +80,7 @@ def index():
             video {
                 width: 40%;
                 min-width: 180px;
-                max-width: 600px;
+                max-width: 400px;
                 height: auto;
                 display: block;
                 border: 5px solid black;
@@ -185,9 +185,13 @@ def approve_video():
 def reject_video():
     video_id = request.json.get('video')
     if video_id:
-        metadata = get_metadata()   
-        metadata['all videos'].remove(int(video_id))
-        del metadata['data of videos'][f'video{video_id}']
+        metadata = get_metadata()
+        if video_id in metadata['all videos']:
+            metadata['all videos'].remove(video_id)
+        
+        video_key = f"video{video_id}"
+        if video_key in metadata['data of videos']:
+            del metadata['data of videos'][video_key]
         
         video_path = os.path.join(VIDEO_DIR, f'video{video_id}.mp4')
         if os.path.exists(video_path):

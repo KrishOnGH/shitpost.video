@@ -59,8 +59,8 @@ def fetch_aita_post(username):
     subreddit = reddit.subreddit("AmItheAsshole")
 
     # Fetch top 30 and new 30 posts
-    top_posts = list(subreddit.top(limit=30))
-    new_posts = list(subreddit.new(limit=30))
+    top_posts = list(subreddit.top(limit=100))
+    new_posts = list(subreddit.new(limit=100))
     all_posts = top_posts + new_posts
 
     # Filter posts with content over 120 characters and title starting with AITA
@@ -106,17 +106,25 @@ def fetch_askreddit_post(username):
     subreddit = reddit.subreddit("AskReddit")
 
     # Fetch top 30 and new 30 posts
-    top_posts = list(subreddit.top(limit=30))
-    new_posts = list(subreddit.new(limit=30))
+    top_posts = list(subreddit.top(limit=10))
+    new_posts = list(subreddit.new(limit=10))
     all_posts = top_posts + new_posts
+
+    print(all_posts)
 
     # Filter posts
     filtered_posts = [
         post for post in all_posts 
         if len(post.selftext) < 120 
         and post.title.endswith('?')
-        and any(len(comment.body) > 120 for comment in post.comments if not isinstance(comment, praw.models.MoreComments))
+        and any(len(comment.body) > 120 for comment in list(post.comments)[:10])
     ]
+
+    print('hi')
+    print(filtered_posts)
+    
+    if not filtered_posts:
+        return None
 
     # Load or create the used_posts.json file
     if os.path.exists(os.path.join(script_dir, 'used_posts.json')):
