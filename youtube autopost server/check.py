@@ -175,7 +175,7 @@ def approve_video():
     if video_id:
         metadata = get_metadata()
         approved_videos = set(metadata.get('approved videos', []))
-        approved_videos.add(int(video_id))
+        approved_videos.add(str(video_id))
         metadata['approved videos'] = list(approved_videos)
         save_metadata(metadata)
         return jsonify({'status': 'approved'})
