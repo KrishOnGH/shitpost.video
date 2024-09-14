@@ -1,4 +1,5 @@
 [![Cover](https://github.com/KrishOnGH/shitpost.video/blob/c1dc325a6ea0cab1fc3207c9f55e8b4deb3c7f03/image.png)](https://www.loom.com/share/e66411b5f1084862be3291763d19c8c1?sid=373bb510-6b08-4f6c-b38e-cdfb9aaca0bc)
+
 (Above Video is a Loom Link, Click on it)
 
 # shitpost.video
