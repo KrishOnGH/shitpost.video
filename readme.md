@@ -12,7 +12,8 @@ shitpost.video is a tool for creating and posting Reddit TikTok-style videos for
 ## Setup
 
 1. Rename `.env.text` in the `common resources` directory to `.env` and add your real credentials.
-2. If using the autopost server, replace `ytClientSecrets.json` with your actual Google API client secrets.
+2. Download Image Magik and FFMPEG and replace the Image Magik exe link in "common resources/generate_video.py"
+3. If using the autopost server, replace `ytClientSecrets.json` with your actual Google API client secrets.
 
 ## Running the Web Client
 
