@@ -1,0 +1,16 @@
+Flask==3.0.0
+schedule==1.2.1
+google-api-core==2.19.1
+google-api-python-client==2.137.0
+google-auth==2.28.1
+google-auth-httplib2==0.2.0
+google-auth-oauthlib==1.2.0
+google-pasta==0.2.0
+googleapis-common-protos==1.63.2
+pyttsx3==2.90
+pandas==2.2.2
+whisper==1.1.10
+openai-whisper==20231117
+praw==7.7.1
+prawcore==2.4.0
+moviepy==1.0.3
