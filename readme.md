@@ -1,3 +1,5 @@
+![Cover](https://github.com/KrishOnGH/shitpost.video/blob/c1dc325a6ea0cab1fc3207c9f55e8b4deb3c7f03/image.png)
+
 # shitpost.video
 
 shitpost.video is a tool for creating and posting Reddit TikTok-style videos for the AITA (Am I The Asshole) and Ask Reddit subreddits. It consists of two main components:
